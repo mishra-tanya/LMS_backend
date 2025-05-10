@@ -31,7 +31,7 @@ jobs:
 
       - name: Deploy Backend to Server using SSH
         run: |
-          rsync -avz --progress -e "ssh -p ${{ secrets.SSH_PORT }} -i ~/.ssh/id_rsa" backend/ ${{ secrets.SSH_USERNAME }}@${{ secrets.SSH_HOST }}:${{ secrets.REMOTE_DEPLOY_PATH }}
+          rsync -avz --progress -e "ssh -p ${{ secrets.SSH_PORT }} -i ~/.ssh/id_rsa"  ${{ secrets.SSH_USERNAME }}@${{ secrets.SSH_HOST }}:${{ secrets.REMOTE_DEPLOY_PATH }}
 
       - name: Run Migrations
         run: |
