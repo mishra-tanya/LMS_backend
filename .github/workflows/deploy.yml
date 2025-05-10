@@ -30,7 +30,6 @@ jobs:
           rsync -avz --delete \
             --exclude='.git*' \
             --exclude='node_modules' \
-            --exclude='vendor' \
             --exclude='.env' \
             -e "ssh -p ${{ secrets.SSH_PORT }} -i ~/.ssh/id_rsa" \
             ./ ${{ secrets.SSH_USERNAME }}@${{ secrets.SSH_HOST }}:${{ secrets.REMOTE_DEPLOY_PATH }}
