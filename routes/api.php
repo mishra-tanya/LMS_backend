@@ -6,7 +6,7 @@ use Illuminate\Foundation\Auth\EmailVerificationRequest;
 
 use App\Http\Controllers\AuthController;
 use App\Http\Controllers\ForgotPasswordController;
-
+ 
 // Auth routes
 Route::post('/login', [AuthController::class, 'login']);
 Route::post('/register', [AuthController::class, 'register']);
