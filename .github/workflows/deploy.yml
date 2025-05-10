@@ -19,7 +19,6 @@ jobs:
 
       - name: Install PHP Dependencies
         run: |
-          cd backend
           composer install --no-dev --optimize-autoloader
 
       - name: Setup SSH Key
