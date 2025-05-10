@@ -34,4 +34,4 @@ jobs:
 
       - name: Run Migrations
         run: |
-          ssh -t -p ${{ secrets.SSH_PORT }} -i ~/.ssh/id_rsa ${{ secrets.SSH_USERNAME }}@${{ secrets.SSH_HOST }} "cd ${{ secrets.REMOTE_DEPLOY_PATH }} && php artisan migrate --force"
+          ssh -p ${{ secrets.SSH_PORT }} -i ~/.ssh/id_rsa ${{ secrets.SSH_USERNAME }}@${{ secrets.SSH_HOST }} "cd ${{ secrets.REMOTE_DEPLOY_PATH }} && php artisan migrate --force"
