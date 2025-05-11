@@ -7,55 +7,281 @@
 <a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/l/laravel/framework" alt="License"></a>
 </p>
 
-## About Laravel
+# Learning Management System (LMS) Backend
 
-Laravel is a web application framework with expressive, elegant syntax. We believe development must be an enjoyable and creative experience to be truly fulfilling. Laravel takes the pain out of development by easing common tasks used in many web projects, such as:
+A robust Laravel-based API backend for a Learning Management System that manages courses, subjects, and student reviews.
 
-- [Simple, fast routing engine](https://laravel.com/docs/routing).
-- [Powerful dependency injection container](https://laravel.com/docs/container).
-- Multiple back-ends for [session](https://laravel.com/docs/session) and [cache](https://laravel.com/docs/cache) storage.
-- Expressive, intuitive [database ORM](https://laravel.com/docs/eloquent).
-- Database agnostic [schema migrations](https://laravel.com/docs/migrations).
-- [Robust background job processing](https://laravel.com/docs/queues).
-- [Real-time event broadcasting](https://laravel.com/docs/broadcasting).
+## Table of Contents
 
-Laravel is accessible, powerful, and provides tools required for large, robust applications.
+- [Project Overview](#project-overview)
+- [Technology Stack](#technology-stack)
+- [Project Structure](#project-structure)
+- [Database Schema](#database-schema)
+- [API Documentation](#api-documentation)
+  - [Request & Response Formats](#request--response-formats)
+  - [Authentication Endpoints](#authentication-endpoints)
+  - [User Endpoints](#user-endpoints)
+  - [Course Endpoints](#course-endpoints)
+  - [Subject Endpoints](#subject-endpoints)
+  - [Review Endpoints](#review-endpoints)
+- [Authentication](#authentication)
+- [Installation](#installation)
+- [Environment Setup](#environment-setup)
+- [Running the Project](#running-the-project)
 
-## Learning Laravel
+## Project Overview
 
-Laravel has the most extensive and thorough [documentation](https://laravel.com/docs) and video tutorial library of all modern web application frameworks, making it a breeze to get started with the framework.
+This LMS (Learning Management System) backend provides a comprehensive API for managing educational content including courses, subjects, and student reviews. The system includes user authentication with JWT, email verification, and password reset functionality.
 
-You may also try the [Laravel Bootcamp](https://bootcamp.laravel.com), where you will be guided through building a modern Laravel application from scratch.
+## Technology Stack
 
-If you don't feel like reading, [Laracasts](https://laracasts.com) can help. Laracasts contains thousands of video tutorials on a range of topics including Laravel, modern PHP, unit testing, and JavaScript. Boost your skills by digging into our comprehensive video library.
+- **Framework**: Laravel
+- **PHP Version**: 8.x
+- **Database**: MySQL
+- **Authentication**: JWT (JSON Web Tokens)
+- **API Format**: RESTful JSON
 
-## Laravel Sponsors
+## Project Structure
 
-We would like to extend our thanks to the following sponsors for funding Laravel development. If you are interested in becoming a sponsor, please visit the [Laravel Partners program](https://partners.laravel.com).
+The project follows Laravel's standard MVC architecture with additional organization:
 
-### Premium Partners
+```
+LMS_backend/
+├── app/
+│   ├── Helpers/           # Custom helper classes (ApiResponse)
+│   ├── Http/
+│   │   ├── Controllers/   # API controllers
+│   │   └── Requests/      # Form requests for validation
+│   ├── Models/            # Eloquent models
+│   ├── Providers/         # Service providers
+│   └── Services/          # Business logic services
+├── config/                # Configuration files
+├── database/
+│   ├── factories/         # Model factories
+│   ├── migrations/        # Database migrations
+│   └── seeders/           # Database seeders
+├── routes/
+│   ├── api.php            # API routes
+│   ├── web.php            # Web routes
+│   └── console.php        # Console commands
+└── tests/                 # Automated tests
+```
 
-- **[Vehikl](https://vehikl.com/)**
-- **[Tighten Co.](https://tighten.co)**
-- **[Kirschbaum Development Group](https://kirschbaumdevelopment.com)**
-- **[64 Robots](https://64robots.com)**
-- **[Curotec](https://www.curotec.com/services/technologies/laravel/)**
-- **[DevSquad](https://devsquad.com/hire-laravel-developers)**
-- **[Redberry](https://redberry.international/laravel-development/)**
-- **[Active Logic](https://activelogic.com)**
+## Database Schema
 
-## Contributing
+The system consists of the following core entities:
 
-Thank you for considering contributing to the Laravel framework! The contribution guide can be found in the [Laravel documentation](https://laravel.com/docs/contributions).
+### Users
 
-## Code of Conduct
+The standard Laravel users table with additional fields for authentication.
 
-In order to ensure that the Laravel community is welcoming to all, please review and abide by the [Code of Conduct](https://laravel.com/docs/contributions#code-of-conduct).
+### Courses
 
-## Security Vulnerabilities
+```php
+Schema::create('courses', function (Blueprint $table) {
+    $table->id('course_id');
+    $table->string('course_name');
+    $table->integer('total_semester');
+    $table->timestamps();
+});
+```
 
-If you discover a security vulnerability within Laravel, please send an e-mail to Taylor Otwell via [taylor@laravel.com](mailto:taylor@laravel.com). All security vulnerabilities will be promptly addressed.
+### Subjects
+
+```php
+Schema::create('subjects', function (Blueprint $table) {
+    $table->id('subject_id');
+    $table->string('subject_name');
+    $table->unsignedBigInteger('course_id');
+    $table->foreign('course_id')->references('course_id')->on('courses')->onDelete('cascade');
+    $table->string('resource_link')->nullable();
+    $table->integer('semester');
+    $table->timestamps();
+});
+```
+
+### Reviews
+
+```php
+Schema::create('reviews', function (Blueprint $table) {
+    $table->id('review_id');
+    $table->unsignedBigInteger('course_id');
+    $table->unsignedBigInteger('user_id');
+    $table->integer('rating')->default(0);
+    $table->text('review_description')->nullable();
+    $table->boolean('is_approved')->default(false);
+    $table->timestamps();
+    
+    $table->foreign('course_id')->references('course_id')->on('courses')->onDelete('cascade');
+    $table->foreign('user_id')->references('id')->on('users')->onDelete('cascade');
+});
+```
+
+## API Documentation
+
+### Request & Response Formats
+
+All API requests with a body should be sent as `application/json` content type. All responses are returned in JSON format.
+
+### Authentication Endpoints
+
+| Method | Endpoint                         | Description                             | Request Body                                                | Response                                          |
+|--------|---------------------------------|-----------------------------------------|------------------------------------------------------------|---------------------------------------------------|
+| POST   | `/api/login`                     | User login                              | JSON: `{ "email": "user@example.com", "password": "secret" }` | JWT token, user data                              |
+| POST   | `/api/register`                  | User registration                       | JSON: `{ "name": "John Doe", "email": "user@example.com", "password": "secret", "password_confirmation": "secret" }` | User data, verification info                      |
+| POST   | `/api/email/verification-notification` | Resend verification email         | No body required (JWT auth header needed)                   | Confirmation message                              |
+| GET    | `/api/email/verify/{id}/{hash}`  | Verify email address                    | No body required (URL parameters)                           | Verification status                               |
+| POST   | `/api/forgot-password`           | Request password reset                  | JSON: `{ "email": "user@example.com" }`                     | Reset link info                                   |
+| POST   | `/api/reset-password`            | Reset password                          | JSON: `{ "email": "user@example.com", "token": "reset-token", "password": "newpassword", "password_confirmation": "newpassword" }` | Success message                                   |
+
+### User Endpoints (Protected)
+
+| Method | Endpoint                         | Description                             | Request Body                                                | Response                                          |
+|--------|---------------------------------|-----------------------------------------|------------------------------------------------------------|---------------------------------------------------|
+| GET    | `/api/me`                        | Get authenticated user info             | No body required (JWT auth header needed)                   | User data                                         |
+| POST   | `/api/logout`                    | Logout user                             | No body required (JWT auth header needed)                   | Logout confirmation                               |
+
+### Course Endpoints
+
+| Method | Endpoint                         | Description                             | Request Body                                                | Response                                          |
+|--------|---------------------------------|-----------------------------------------|------------------------------------------------------------|---------------------------------------------------|
+| GET    | `/api/courses`                   | Get all courses                         | No body required                                           | List of courses                                   |
+| GET    | `/api/courses/{id}`              | Get course by ID                        | No body required                                           | Course details                                    |
+| POST   | `/api/courses`                   | Create new course                       | JSON: `{ "course_name": "Computer Science", "total_semester": 8 }` | Created course                                    |
+| PUT    | `/api/courses/{id}`              | Update course                           | JSON: `{ "course_name": "Data Science", "total_semester": 6 }` | Updated course                                    |
+| DELETE | `/api/courses/{id}`              | Delete course                           | No body required                                           | Success message                                   |
+
+### Subject Endpoints
+
+| Method | Endpoint                         | Description                             | Request Body                                                | Response                                          |
+|--------|---------------------------------|-----------------------------------------|------------------------------------------------------------|---------------------------------------------------|
+| GET    | `/api/subjects`                  | Get all subjects                        | No body required                                           | List of subjects                                  |
+| GET    | `/api/subjects/{id}`             | Get subject by ID                       | No body required                                           | Subject details                                   |
+| GET    | `/api/subjects/course/{course_id}` | Get subjects by course ID            | No body required                                           | List of subjects for course                       |
+| POST   | `/api/subjects`                  | Create new subject                      | JSON: `{ "subject_name": "Data Structures", "course_id": 1, "resource_link": "https://example.com/ds-resources", "semester": 3 }` | Created subject                                   |
+| PUT    | `/api/subjects/{id}`             | Update subject                          | JSON: `{ "subject_name": "Advanced Data Structures", "course_id": 1, "resource_link": "https://example.com/ads-resources", "semester": 4 }` | Updated subject                                   |
+| DELETE | `/api/subjects/{id}`             | Delete subject                          | No body required                                           | Success message                                   |
+
+### Review Endpoints
+
+| Method | Endpoint                          | Description                             | Request Body                                               | Response                                          |
+|--------|----------------------------------|-----------------------------------------|-----------------------------------------------------------|---------------------------------------------------|
+| POST   | `/api/reviews`                    | Create new review                       | JSON: `{ "course_id": 1, "rating": 5, "review_description": "Excellent course material and teaching!" }` | Created review                                    |
+| GET    | `/api/reviews/subject/{subject_id}` | Get reviews by subject ID            | No body required                                           | List of reviews for subject                       |
+| PUT    | `/api/reviews/{review_id}`        | Approve review                          | JSON: `{ "is_approved": true }`                            | Updated review                                    |
+| DELETE | `/api/reviews/{review_id}`        | Delete review                           | No body required                                           | Success message                                   |
+
+## Response Format
+
+All API responses follow a consistent format:
+
+### Success Response
+
+```json
+{
+    "status": true,
+    "message": "Success message",
+    "data": {
+        // Response data
+    }
+}
+```
+
+### Error Response
+
+```json
+{
+    "status": false,
+    "error_type": "client_error|server_error",
+    "message": "Error message",
+    "data": {
+        // Optional error details
+    }
+}
+```
+
+## Authentication
+
+The API uses JWT (JSON Web Token) for authentication. Protected routes require a valid JWT token to be included in the Authorization header:
+
+```
+Authorization: Bearer {token}
+```
+
+## Installation
+
+1. Clone the repository:
+   ```bash
+   git clone https://your-repo-url/LMS_backend.git
+   cd LMS_backend
+   ```
+
+2. Install dependencies:
+   ```bash
+   composer install
+   ```
+
+3. Copy the environment file:
+   ```bash
+   cp .env.example .env
+   ```
+
+4. Generate application key:
+   ```bash
+   php artisan key:generate
+   ```
+
+5. Generate JWT secret:
+   ```bash
+   php artisan jwt:secret
+   ```
+
+## Environment Setup
+
+Configure your `.env` file with the following settings:
+
+```
+DB_CONNECTION=mysql
+DB_HOST=127.0.0.1
+DB_PORT=3306
+DB_DATABASE=lms_db
+DB_USERNAME=your_db_username
+DB_PASSWORD=your_db_password
+
+MAIL_MAILER=smtp
+MAIL_HOST=your_mail_host
+MAIL_PORT=your_mail_port
+MAIL_USERNAME=your_mail_username
+MAIL_PASSWORD=your_mail_password
+MAIL_ENCRYPTION=tls
+MAIL_FROM_ADDRESS=noreply@yourdomain.com
+MAIL_FROM_NAME="${APP_NAME}"
+```
+
+## Running the Project
+
+1. Run database migrations:
+   ```bash
+   php artisan migrate
+   ```
+
+2. Start the development server:
+   ```bash
+   php artisan serve
+   ```
+
+3. The API will be available at:
+   ```
+   http://localhost:8000/api
+   ```
+
+## Testing
+
+Run the automated tests with:
+```bash
+php artisan test
+```
 
 ## License
 
-The Laravel framework is open-sourced software licensed under the [MIT license](https://opensource.org/licenses/MIT).
+This project is open-sourced software licensed under the [MIT license](https://opensource.org/licenses/MIT).

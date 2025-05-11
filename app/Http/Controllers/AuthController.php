@@ -47,7 +47,6 @@ class AuthController extends Controller
     // fetching user
     public function me(): JsonResponse{
         return ApiResponse::success('User details fetched successfully', $this->authService->getUser());
-        return response()->json($this->authService->getUser());
     }
 
     // logout
