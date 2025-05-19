@@ -9,9 +9,24 @@ use App\Models\Courses;
 class SubjectController extends Controller
 {
     //
+    public function getSubjects()  {
+        try {
+            $subjects = Subjects::all();
+            if ($subjects->isEmpty()) {
+                return ApiResponse::clientError('No subjects found', null, 404);
+            }
+            return ApiResponse::success('Subjects retrieved successfully', $subjects);
+        } catch (\Throwable $th) {
+            if ($th instanceof \Illuminate\Database\QueryException) {
+                return ApiResponse::serverError('Database error: ' . $th->getMessage(), null, 500);
+            }
+            return ApiResponse::serverError('Failed to retrieve subjects: ' . $th->getMessage(), null, 500);
+        }
+        
+    }
     public function getSubjectById($id){
         try {
-            //code...
+            
             $subject = Subjects::find($id, 'subject_id');
             if ($subject) {
                 return ApiResponse::success('Subject retrieved successfully', $subject);

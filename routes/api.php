@@ -8,6 +8,8 @@ use Illuminate\Foundation\Auth\EmailVerificationRequest;
 use App\Http\Controllers\AuthController;
 use App\Http\Controllers\ForgotPasswordController;
 use App\Http\Controllers\SubjectController;
+use App\Http\Controllers\ChapterController;
+use App\Http\Controllers\ReviewController;
  
 // Auth routes
 Route::post('/login', [AuthController::class, 'login']);
@@ -50,3 +52,19 @@ Route::post('/subjects', [SubjectController::class, 'createSubject']);
 Route::put('/subjects/{id}', [SubjectController::class, 'updateSubject']);
 Route::delete('/subjects/{id}', [SubjectController::class, 'deleteSubject']);
 
+
+// Chapter routes
+Route::get('/chapters', [ChapterController::class, 'getChapters']);
+Route::get('/chapters/subject/{subject_id}', [ChapterController::class, 'getChaptersBySubjectId']);
+Route::get('/chapters/course/{course_id}', [ChapterController::class, 'getChaptersByCourseId']); // New route
+Route::get('/chapters/{id}', [ChapterController::class, 'getChapterById']);
+Route::post('/chapters', [ChapterController::class, 'createChapter']);
+Route::put('/chapters/{id}', [ChapterController::class, 'updateChapter']);
+Route::delete('/chapters/{id}', [ChapterController::class, 'deleteChapter']);
+
+
+// Review routes
+Route::post('/reviews',[ReviewController::class, 'createReview']);
+Route::get('/reviews/subject/{subject_id}', [ReviewController::class, 'getReviewsBySubjectId']);
+Route::put('/reviews/{review_id}', [ReviewController::class, 'approveReview']);
+Route::delete('/reviews/{review_id}', [ReviewController::class, 'deleteReview']);
