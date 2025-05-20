@@ -15,11 +15,39 @@ class ChapterController extends Controller
     public function getChaptersBySubjectId($subject_id)
     {
         try {
+            // First, check if the subject exists
+            $subject = Subjects::find($subject_id);
+            if (!$subject) {
+                return ApiResponse::clientError('Subject not found', null, 404);
+            }
+            
             $chapters = Chapters::where('subject_id', $subject_id)->get();
+            
             if ($chapters->isEmpty()) {
                 return ApiResponse::clientError('No chapters found for this subject', null, 404);
             }
-            return ApiResponse::success('Chapters retrieved successfully', $chapters);
+            
+            // Structure the response with subject details
+            $result = [
+                'subject_details' => [
+                    'subject_id' => $subject->subject_id,
+                    'subject_name' => $subject->subject_name,
+                    'course_id' => $subject->course_id,
+                    'semester' => $subject->semester,
+                    'resource_link' => $subject->resource_link
+                ],
+                'chapters' => $chapters->map(function ($chapter) {
+                    return [
+                        'chapter_id' => $chapter->chapter_id,
+                        'chapter_name' => $chapter->chapter_name,
+                        'resource_link' => $chapter->resource_link,
+                        'created_at' => $chapter->created_at,
+                        'updated_at' => $chapter->updated_at
+                    ];
+                })
+            ];
+            
+            return ApiResponse::success('Chapters retrieved successfully', $result);
         } catch (\Throwable $th) {
             if ($th instanceof \Illuminate\Database\QueryException) {
                 return ApiResponse::serverError('Database error: ' . $th->getMessage(), null, 500);

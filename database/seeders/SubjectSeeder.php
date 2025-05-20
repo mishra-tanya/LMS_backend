@@ -60,11 +60,10 @@ class SubjectSeeder extends Seeder
             ['subject_name' => 'Operations Management', 'course_id' => 5, 'semester' => 5, 'resource_link' => null],
             ['subject_name' => 'Strategic Management', 'course_id' => 5, 'semester' => 6, 'resource_link' => null],
         ];
-
+        
         foreach ($subjects as $subject) {
             Subjects::create($subject);
-        }
-        
+        };
         
         $this->command->info('Sample subject data seeded successfully!');
     }

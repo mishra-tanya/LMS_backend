@@ -9,7 +9,7 @@
 
 # Learning Management System (LMS) Backend
 
-A robust Laravel-based API backend for a Learning Management System that manages courses, subjects, and student reviews.
+A robust Laravel-based API backend for a Learning Management System that manages courses, subjects, chapters, and student reviews.
 
 ## Table of Contents
 
@@ -23,15 +23,17 @@ A robust Laravel-based API backend for a Learning Management System that manages
   - [User Endpoints](#user-endpoints)
   - [Course Endpoints](#course-endpoints)
   - [Subject Endpoints](#subject-endpoints)
+  - [Chapter Endpoints](#chapter-endpoints)
   - [Review Endpoints](#review-endpoints)
 - [Authentication](#authentication)
 - [Installation](#installation)
 - [Environment Setup](#environment-setup)
 - [Running the Project](#running-the-project)
+- [Sample Data](#sample-data)
 
 ## Project Overview
 
-This LMS (Learning Management System) backend provides a comprehensive API for managing educational content including courses, subjects, and student reviews. The system includes user authentication with JWT, email verification, and password reset functionality.
+This LMS (Learning Management System) backend provides a comprehensive API for managing educational content including courses, subjects, chapters, and student reviews. The system includes user authentication with JWT, email verification, and password reset functionality.
 
 ## Technology Stack
 
@@ -100,6 +102,19 @@ Schema::create('subjects', function (Blueprint $table) {
 });
 ```
 
+### Chapters
+
+```php
+Schema::create('chapters', function (Blueprint $table) {
+    $table->id('chapter_id');
+    $table->string('chapter_name');
+    $table->unsignedBigInteger('subject_id');
+    $table->foreign('subject_id')->references('subject_id')->on('subjects')->onDelete('cascade');
+    $table->string('resource_link')->nullable();
+    $table->timestamps();
+});
+```
+
 ### Reviews
 
 ```php
@@ -161,6 +176,18 @@ All API requests with a body should be sent as `application/json` content type. 
 | POST   | `/api/subjects`                  | Create new subject                      | JSON: `{ "subject_name": "Data Structures", "course_id": 1, "resource_link": "https://example.com/ds-resources", "semester": 3 }` | Created subject                                   |
 | PUT    | `/api/subjects/{id}`             | Update subject                          | JSON: `{ "subject_name": "Advanced Data Structures", "course_id": 1, "resource_link": "https://example.com/ads-resources", "semester": 4 }` | Updated subject                                   |
 | DELETE | `/api/subjects/{id}`             | Delete subject                          | No body required                                           | Success message                                   |
+
+### Chapter Endpoints
+
+| Method | Endpoint                          | Description                             | Request Body                                                | Response                                          |
+|--------|----------------------------------|-----------------------------------------|------------------------------------------------------------|---------------------------------------------------|
+| GET    | `/api/chapters`                   | Get all chapters                        | No body required                                           | List of all chapters with subject details         |
+| GET    | `/api/chapters/{id}`              | Get chapter by ID                       | No body required                                           | Chapter details                                   |
+| GET    | `/api/chapters/subject/{subject_id}` | Get chapters by subject ID          | No body required                                           | Subject details with its chapters                 |
+| GET    | `/api/chapters/course/{course_id}` | Get all chapters for a course         | No body required                                           | Chapters organized by subjects for the course     |
+| POST   | `/api/chapters`                   | Create new chapter                      | JSON: `{ "chapter_name": "Introduction to Arrays", "subject_id": 7, "resource_link": "https://example.com/arrays" }` | Created chapter                                   |
+| PUT    | `/api/chapters/{id}`              | Update chapter                          | JSON: `{ "chapter_name": "Advanced Arrays", "subject_id": 7, "resource_link": "https://example.com/advanced-arrays" }` | Updated chapter                                   |
+| DELETE | `/api/chapters/{id}`              | Delete chapter                          | No body required                                           | Success message                                   |
 
 ### Review Endpoints
 
@@ -280,6 +307,25 @@ MAIL_FROM_NAME="${APP_NAME}"
 Run the automated tests with:
 ```bash
 php artisan test
+```
+
+## Sample Data
+
+The system includes seeders to populate the database with sample educational content:
+
+1. **CourseSeeder**: Creates sample courses including Computer Science, Electrical Engineering, Data Science, and AI/ML.
+
+2. **SubjectSeeder**: Adds subjects for each course organized by semester.
+
+3. **ChapterSeeder**: Populates chapters for various subjects including:
+   - Data Structures chapters (arrays, linked lists, trees, etc.)
+   - Object-Oriented Programming chapters (inheritance, polymorphism, etc.)
+   - Python Programming chapters
+   - Deep Learning chapters
+
+To seed your database with this sample data, run:
+```bash
+php artisan db:seed
 ```
 
 ## License

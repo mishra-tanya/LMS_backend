@@ -69,7 +69,6 @@ class SubjectController extends Controller
             $validated = $request->validate([
                 'subject_name' => 'required|string|max:255',
                 'course_id' => 'required|integer|exists:courses,course_id',
-                'resource_link' => 'nullable|string|max:255',
                 'semester' => 'required|integer|min:1',
             ]);
             // Check if subject already exists
