@@ -32,7 +32,11 @@ jobs:
 
       - name: Deploy Project via Rsync
         run: |
-          rsync -avz --delete --exclude=".git*" --exclude="node_modules" --exclude="storage/logs" \
+          rsync -avz --delete \
+            --exclude=".git*" \
+            --exclude="node_modules" \
+            --exclude="storage/logs" \
+            --exclude=".env" \
             -e "ssh -p ${{ secrets.SSH_PORT }} -i ~/.ssh/id_rsa" \
             ./ ${{ secrets.SSH_USERNAME }}@${{ secrets.SSH_HOST }}:${{ secrets.REMOTE_DEPLOY_PATH }}
 
