@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Helpers\ApiResponse;
 use App\Models\Courses;
+use App\Models\Subjects;
 use Illuminate\Http\Request;
 use PhpParser\Node\Stmt\TryCatch;
 
@@ -33,6 +34,15 @@ class CourseController extends Controller
         try {
             $course = Courses::find($id, 'course_id');
             if ($course) {
+
+                // get all subject of the courses;
+
+                $subjects= Subjects::where('course_id', $id)->get();
+                if ($subjects->isEmpty()) {
+                    $course->subjects = [];
+                } else {
+                    $course->subjects = $subjects;
+                }
                 return ApiResponse::success('Course retrieved successfully', $course);
             } else {
                 return ApiResponse::clientError('Course not found', null, 404);
