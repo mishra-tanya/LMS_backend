@@ -44,4 +44,4 @@ jobs:
         run: |
           ssh -p ${{ secrets.SSH_PORT }} -i ~/.ssh/id_rsa \
           ${{ secrets.SSH_USERNAME }}@${{ secrets.SSH_HOST }} \
-          "cd ${{ secrets.REMOTE_DEPLOY_PATH }} && php artisan migrate --force"
+          "cd ${{ secrets.REMOTE_DEPLOY_PATH }} && php artisan migrate --force && php artisan db:seed --force"
