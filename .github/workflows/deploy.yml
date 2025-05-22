@@ -1,3 +1,5 @@
+name: Deploy to Hostinger
+
 on:
   push:
     branches:
@@ -11,7 +13,7 @@ jobs:
       - name: Checkout Repository
         uses: actions/checkout@v4
 
-      - name: Setup PHP and Install Dependencies 
+      - name: Setup PHP and Composer
         uses: shivammathur/setup-php@v2
         with:
           php-version: '8.2'
@@ -28,10 +30,14 @@ jobs:
           chmod 600 ~/.ssh/id_rsa
           ssh-keyscan -p ${{ secrets.SSH_PORT }} -H ${{ secrets.SSH_HOST }} >> ~/.ssh/known_hosts
 
-      - name: Deploy Backend to Server using SSH
+      - name: Deploy Project via Rsync
         run: |
-          rsync -avz --progress -e "ssh -p ${{ secrets.SSH_PORT }} -i ~/.ssh/id_rsa"  ${{ secrets.SSH_USERNAME }}@${{ secrets.SSH_HOST }}:${{ secrets.REMOTE_DEPLOY_PATH }}
+          rsync -avz --progress \
+            -e "ssh -p ${{ secrets.SSH_PORT }} -i ~/.ssh/id_rsa" \
+            ./ ${{ secrets.SSH_USERNAME }}@${{ secrets.SSH_HOST }}:${{ secrets.REMOTE_DEPLOY_PATH }}
 
-      - name: Run Migrations
+      - name: Run Laravel Migrations
         run: |
-          ssh -p ${{ secrets.SSH_PORT }} -i ~/.ssh/id_rsa ${{ secrets.SSH_USERNAME }}@${{ secrets.SSH_HOST }} "cd ${{ secrets.REMOTE_DEPLOY_PATH }} && php artisan migrate --force"
+          ssh -p ${{ secrets.SSH_PORT }} -i ~/.ssh/id_rsa \
+          ${{ secrets.SSH_USERNAME }}@${{ secrets.SSH_HOST }} \
+          "cd ${{ secrets.REMOTE_DEPLOY_PATH }} && php artisan migrate --force && php artisan db:seed --force"
