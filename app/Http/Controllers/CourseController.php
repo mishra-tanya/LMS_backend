@@ -34,9 +34,6 @@ class CourseController extends Controller
         try {
             $course = Courses::find($id, 'course_id');
             if ($course) {
-
-                // get all subject of the courses;
-
                 $subjects= Subjects::where('course_id', $id)->get();
                 if ($subjects->isEmpty()) {
                     $course->subjects = [];

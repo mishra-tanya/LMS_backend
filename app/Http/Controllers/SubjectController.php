@@ -65,49 +65,34 @@ class SubjectController extends Controller
 
     public function createSubject(Request $request){
         try {
-            //code...
             $validated = $request->validate([
                 'subject_name' => 'required|string|max:255',
                 'course_id' => 'required|integer|exists:courses,course_id',
+                'resource_link' => 'nullable|string|url',
                 'semester' => 'required|integer|min:1',
             ]);
-            // Check if subject already exists
+            
+            // Check if subject already exists for this course and semester
             $existingSubject = Subjects::where('subject_name', $validated['subject_name'])
                 ->where('course_id', $validated['course_id'])
+                ->where('semester', $validated['semester'])
                 ->first();
+                
             if ($existingSubject) {
-                return ApiResponse::clientError('Subject already exists for this course', null, 409);
+                return ApiResponse::clientError('Subject already exists for this course and semester', null, 409);
             }
+            
+            // Create the subject, handling missing 'resource_link' gracefully
             $subject = Subjects::create([
                 'subject_name' => $validated['subject_name'],
                 'course_id' => $validated['course_id'],
-                'resource_link' => $validated['resource_link'],
+                'resource_link' => $validated['resource_link'] ?? null, // Default to null if not provided
                 'semester' => $validated['semester'],
             ]);
+            
             return ApiResponse::success('Subject created successfully', $subject, 201);
-
-        } catch (\Throwable $th) {
-            if ($th instanceof \Illuminate\Database\QueryException) {
-                return ApiResponse::serverError('Database error: ' . $th->getMessage(), null, 500);
-            }
-            elseif($th instanceof \Illuminate\Validation\ValidationException) {
-                return ApiResponse::clientError('Validation error: ' . $th->getMessage(), null, 422);
-            }
-            elseif ($th instanceof \Illuminate\Database\Eloquent\ModelNotFoundException) {
-                return ApiResponse::clientError('Course not found', null, 404);
-            }
-            elseif ($th instanceof \Illuminate\Database\Eloquent\MassAssignmentException) {
-                return ApiResponse::clientError('Mass assignment error: ' . $th->getMessage(), null, 422);
-            } 
-            elseif ($th instanceof \Illuminate\Database\Eloquent\MassAssignmentException) {
-                return ApiResponse::clientError('Mass assignment error: ' . $th->getMessage(), null, 422);
-            }
-            elseif ($th instanceof \Illuminate\Database\Eloquent\RelationNotFoundException) {
-                return ApiResponse::clientError('Relation not found: ' . $th->getMessage(), null, 422);
-            }
-            else{
-                return ApiResponse::serverError('Failed to create subject: ' . $th->getMessage(), null, 500);
-            }         
+        } catch (\Throwable $e) {
+            return ApiResponse::serverError('Failed to create subject: ' . $e->getMessage(), null, 500);
         }
     }
 
