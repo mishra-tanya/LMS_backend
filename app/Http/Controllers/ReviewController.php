@@ -14,7 +14,7 @@ class ReviewController extends Controller
         try {
             $validated = $request->validate([
                 'course_id' => 'required|integer|exists:courses,course_id',
-                'user_id' => 'required|integer|exists:users,user_id',
+                'user_id' => 'required|integer|exists:users,id',
                 'rating' => 'required|integer|min:1|max:5',
                 'review_description' => 'required|string|max:1000',
             ]);
