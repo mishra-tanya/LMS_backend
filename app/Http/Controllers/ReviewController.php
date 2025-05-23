@@ -21,7 +21,7 @@ class ReviewController extends Controller
 
             // Check if review already exists
             $existingReview = Reviews::where('course_id', $validated['course_id'])
-                ->where('user_id', $validated['user_id'])
+                ->where('id', $validated['user_id'])
                 ->first();
 
             if ($existingReview) {
