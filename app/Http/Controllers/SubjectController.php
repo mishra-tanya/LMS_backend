@@ -99,32 +99,31 @@ class SubjectController extends Controller
     public function updateSubject(Request $request, $id)
     {
         try {
-            //code...
             $validated = $request->validate([
                 'subject_name' => 'required|string|max:255',
                 'course_id' => 'required|integer|exists:courses,course_id',
                 'resource_link' => 'nullable|string|max:255',
                 'semester' => 'required|integer|min:1',
             ]);
+
             $subject = Subjects::find($id);
             if (!$subject) {
                 return ApiResponse::clientError('Subject not found', null, 404);
             }
+
             $subject->update($validated);
+
             return ApiResponse::success('Subject updated successfully', $subject);
         } catch (\Throwable $th) {
             if ($th instanceof \Illuminate\Database\QueryException) {
                 return ApiResponse::serverError('Database error: ' . $th->getMessage(), null, 500);
-            }
-            elseif($th instanceof \Illuminate\Validation\ValidationException) {
+            } elseif ($th instanceof \Illuminate\Validation\ValidationException) {
                 return ApiResponse::clientError('Validation error: ' . $th->getMessage(), null, 422);
-            }
-            elseif ($th instanceof \Illuminate\Database\Eloquent\ModelNotFoundException) {
+            } elseif ($th instanceof \Illuminate\Database\Eloquent\ModelNotFoundException) {
                 return ApiResponse::clientError('Subject not found', null, 404);
-            }
-            else{
+            } else {
                 return ApiResponse::serverError('Failed to update subject: ' . $th->getMessage(), null, 500);
-            }          //throw $th;
+            }
         }
     }
 
