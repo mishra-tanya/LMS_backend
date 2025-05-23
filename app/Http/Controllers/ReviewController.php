@@ -2,9 +2,12 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\User;
 use Illuminate\Http\Request;
 use App\Helpers\ApiResponse;
 use App\Models\Reviews;
+use App\Models\Courses;
+
 class ReviewController extends Controller
 {
     //
@@ -27,8 +30,12 @@ class ReviewController extends Controller
             if ($existingReview) {
                 return ApiResponse::clientError('Review already exists', null, 409);
             }
-
-            $review = Reviews::create($validated);
+            $review = Reviews::create([
+                ...$validated,
+                'course_name' => Courses::find($validated['course_id'])->course_name,
+                'user_name' => auth()->user()->name,
+                'is_approved' => false,
+            ]);
 
             return ApiResponse::success('Review created successfully', $review);
         } catch (\Throwable $th) {
@@ -45,6 +52,12 @@ class ReviewController extends Controller
 
             // find all review that are not approved
             $unapprovedReviews = Reviews::where('is_approved', false)->get();
+            // course and user name details
+            $unapprovedReviews->transform(function ($review) {
+                $review->course_name = Courses::find($review->course_id)->course_name;
+                $review->user_name = User::find($review->user_id)->name;
+                return $review;
+            });
             if ($unapprovedReviews->isEmpty()) {
                 return ApiResponse::clientError('No reviews found', null, 404);
             }
