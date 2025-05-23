@@ -38,6 +38,24 @@ class ReviewController extends Controller
             return ApiResponse::serverError('Failed to create review: ' . $th->getMessage(), null, 500);
         }
     }
+
+    public function getReviews()
+    {
+        try {
+
+            // find all review that are not approved
+            $unapprovedReviews = Reviews::where('is_approved', false)->get();
+            if ($unapprovedReviews->isEmpty()) {
+                return ApiResponse::clientError('No reviews found', null, 404);
+            }
+            return ApiResponse::success('Reviews retrieved successfully', $unapprovedReviews);
+        } catch (\Throwable $th) {
+            if ($th instanceof \Illuminate\Database\QueryException) {
+                return ApiResponse::serverError('Database error: ' . $th->getMessage(), null, 500);
+            }
+            return ApiResponse::serverError('Failed to retrieve reviews: ' . $th->getMessage(), null, 500);
+        }
+    }
     public function getReviewsBySubjectId($subject_id)
     {
         try {
