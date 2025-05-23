@@ -65,6 +65,7 @@ Route::delete('/chapters/{id}', [ChapterController::class, 'deleteChapter']);
 
 // Review routes
 Route::post('/reviews',[ReviewController::class, 'createReview']);
+Route::get('/reviews', [ReviewController::class, 'getReviews']);
 Route::get('/reviews/subject/{subject_id}', [ReviewController::class, 'getReviewsBySubjectId']);
 Route::put('/reviews/{review_id}', [ReviewController::class, 'approveReview']);
 Route::delete('/reviews/{review_id}', [ReviewController::class, 'deleteReview']);
