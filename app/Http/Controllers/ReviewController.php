@@ -14,14 +14,14 @@ class ReviewController extends Controller
         try {
             $validated = $request->validate([
                 'course_id' => 'required|integer|exists:courses,course_id',
-                'user_id' => 'required|integer|exists:users,id',
+                'user_id' => 'required|integer|exists:users,id', // Corrected to match the users table's id column
                 'rating' => 'required|integer|min:1|max:5',
                 'review_description' => 'required|string|max:1000',
             ]);
 
             // Check if review already exists
             $existingReview = Reviews::where('course_id', $validated['course_id'])
-                ->where('id', $validated['user_id'])
+                ->where('user_id', $validated['user_id']) // Corrected to use user_id
                 ->first();
 
             if ($existingReview) {
