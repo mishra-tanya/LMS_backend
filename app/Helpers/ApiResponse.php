@@ -34,4 +34,13 @@ class ApiResponse
     {
         return self::error($message, $data, $code);
     }
+
+    public static function unauthorized($message = 'Unauthorized', $data = null)
+    {
+        return response()->json([
+            'success' => false,
+            'message' => $message,
+            'data' => $data,
+        ], 401);
+    }
 }

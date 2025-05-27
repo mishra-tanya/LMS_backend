@@ -9,6 +9,10 @@ use App\Http\Controllers\AuthController;
 use App\Http\Controllers\ForgotPasswordController;
 use App\Http\Controllers\SubjectController;
 use App\Http\Controllers\ChapterController;
+
+use App\Http\Controllers\ReviewController;
+use App\Http\Controllers\PhonePeController;
+
 use App\Http\Controllers\SubjectReviewController;
 use App\Http\Controllers\CourseReviewController;
 use App\Http\Controllers\CourseSemesterController;
@@ -36,7 +40,9 @@ Route::middleware('auth:api')->group(function () {
     Route::post('/logout', [AuthController::class, 'logout']);
 });
 
-
+// phonepe payments
+Route::post('/phonepe-initiate', [PhonePeController::class, 'initiate']);
+Route::post('/phonepe-callback', [PhonePeController::class, 'callback'])->name('phonepe.callback');
 
 // Course routes
 Route::get('/courses', [CourseController::class, 'getCourses']);
