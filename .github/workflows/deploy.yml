@@ -21,7 +21,7 @@ jobs:
 
       - name: Install PHP Dependencies
         run: |
-          composer install --no-dev --optimize-autoloader
+          composer install --optimize-autoloader
 
       - name: Setup SSH Key
         run: |
