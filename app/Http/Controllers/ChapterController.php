@@ -16,7 +16,7 @@ class ChapterController extends Controller
     {
         try {
             // First, check if the subject exists
-            $subject = Subjects::find($subject_id);
+            $subject = Subjects::find($subject_id,'subject_id');
             if (!$subject) {
                 return ApiResponse::clientError('Subject not found', null, 404);
             }

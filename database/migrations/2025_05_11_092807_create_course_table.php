@@ -14,7 +14,9 @@ return new class extends Migration
         Schema::create('courses', function (Blueprint $table) {
             $table->id('course_id');
             $table->string('course_name');
-            $table->integer('total_semester');
+            $table->string('image')->nullable();
+            $table->text('description')->nullable();
+            $table->unsignedInteger('semester'); 
             $table->timestamps();
         });
     }

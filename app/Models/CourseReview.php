@@ -2,18 +2,18 @@
 
 namespace App\Models;
 
+use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 
-class Reviews extends Model
+class CourseReview extends Model
 {
-    //
-    protected $table = 'reviews';
-    protected $primaryKey = 'review_id';
+    use HasFactory;
+
     protected $fillable = [
         'course_id',
         'user_id',
         'rating',
         'review_description',
-        'is_approved'
+        'is_approved',
     ];
 }

@@ -11,6 +11,16 @@ class Courses extends Model
     
     protected $fillable = [
         'course_name',
-        'total_semester',
+        'semester',
+        'description',
+        'image',
+        'price', // New field
+        'discount' // New field
+
     ];
+
+    public function semesters()
+    {
+        return $this->hasMany(CourseSemester::class, 'course_id', 'course_id');
+    }
 }

@@ -9,9 +9,14 @@ use App\Http\Controllers\AuthController;
 use App\Http\Controllers\ForgotPasswordController;
 use App\Http\Controllers\SubjectController;
 use App\Http\Controllers\ChapterController;
+
 use App\Http\Controllers\ReviewController;
 use App\Http\Controllers\PhonePeController;
- 
+
+use App\Http\Controllers\SubjectReviewController;
+use App\Http\Controllers\CourseReviewController;
+use App\Http\Controllers\CourseSemesterController;
+
 // Auth routes
 Route::post('/login', [AuthController::class, 'login']);
 Route::post('/register', [AuthController::class, 'register']);
@@ -24,7 +29,7 @@ Route::post('/email/verification-notification', function (Request $request) {
 Route::get('email/verify/{id}/{hash}', [AuthController::class, 'verifyEmail'])->name('verification.verify');
 
 Route::post('forgot-password', [ForgotPasswordController::class, 'forgotPassword']);
-Route::post('reset-password',  [ForgotPasswordController::class, 'resetPassword']);
+Route::post('reset-password', [ForgotPasswordController::class, 'resetPassword']);
 Route::get('/password/reset/{token}', function ($token) {
     return response()->json(['token' => $token]);
 })->name('password.reset');
@@ -66,8 +71,23 @@ Route::put('/chapters/{id}', [ChapterController::class, 'updateChapter']);
 Route::delete('/chapters/{id}', [ChapterController::class, 'deleteChapter']);
 
 
-// Review routes
-Route::post('/reviews',[ReviewController::class, 'createReview']);
-Route::get('/reviews/subject/{subject_id}', [ReviewController::class, 'getReviewsBySubjectId']);
-Route::put('/reviews/{review_id}', [ReviewController::class, 'approveReview']);
-Route::delete('/reviews/{review_id}', [ReviewController::class, 'deleteReview']);
+
+// course Review routes
+Route::post('/coursereviews', [CourseReviewController::class, 'createCourseReview']);
+Route::get('/coursereviews', [CourseReviewController::class, 'getCourseReviews']);
+Route::get('/coursereviews/course/{course_id}', [CourseReviewController::class, 'getReviewsByCourseId']);
+Route::put('/coursereviews/{review_id}', [CourseReviewController::class, 'approveCourseReview']);
+Route::delete('/coursereviews/{review_id}', [CourseReviewController::class, 'deleteCourseReview']);
+Route::get('/coursereviews/approved', [CourseReviewController::class, 'getApprovedCourseReviews']);
+Route::put('/coursereviews/{review_id}/approve', [CourseReviewController::class, 'approveCourseReview']);
+
+// subject Review routes
+Route::post('/subjectreviews', [SubjectReviewController::class, 'createSubjectReview']);
+Route::get('/subjectreviews', [SubjectReviewController::class, 'getSubjectReviews']);
+Route::get('/subjectreviews/subject/{subject_id}', [SubjectReviewController::class, 'getReviewsBySubjectId']);
+Route::put('/subjectreviews/{review_id}', [SubjectReviewController::class, 'approveSubjectReview']);
+Route::delete('/coursereviews/{review_id}', [SubjectReviewController::class, 'deleteSubjectReview']);
+Route::get('/subjectreviews/approved', [SubjectReviewController::class, 'getApprovedSubjectReviews']);
+Route::put('/subjectreviews/{review_id}/approve', [SubjectReviewController::class, 'approveSubjectReview']);
+
+
