@@ -36,7 +36,7 @@ jobs:
             -e "ssh -p ${{ secrets.SSH_PORT }} -i ~/.ssh/id_rsa" \
             ./ ${{ secrets.SSH_USERNAME }}@${{ secrets.SSH_HOST }}:${{ secrets.REMOTE_DEPLOY_PATH }}
 
-      - name: Run Laravel Migrations
+      - name: Run Laravel Migration
         run: |
           ssh -p ${{ secrets.SSH_PORT }} -i ~/.ssh/id_rsa \
           ${{ secrets.SSH_USERNAME }}@${{ secrets.SSH_HOST }} \
