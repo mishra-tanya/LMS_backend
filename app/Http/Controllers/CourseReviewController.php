@@ -16,7 +16,7 @@ class CourseReviewController extends Controller
         try {
             $validator = Validator::make($request->all(), [
                 'course_id' => 'required|exists:courses,course_id',
-                'user_id' => 'required|exists:users,user_id',
+                'user_id' => 'required|exists:users,id',
                 'rating' => 'required|numeric|min:1|max:5',
                 'review_description' => 'nullable|string|max:1000',
             ]);
