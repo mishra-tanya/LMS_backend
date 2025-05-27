@@ -15,8 +15,8 @@ class SubjectReviewController extends Controller
     {
         try {
             $validator = Validator::make($request->all(), [
-                'subject_id' => 'required|exists:subjects,id',
-                'user_id' => 'required|exists:users,id',
+                'subject_id' => 'required|exists:subjects,subject_id',
+                'user_id' => 'required|exists:users,user_id',
                 'rating' => 'required|numeric|min:1|max:5',
                 'review_description' => 'nullable|string|max:1000',
             ]);
