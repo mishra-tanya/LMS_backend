@@ -16,4 +16,14 @@ class SubjectReview extends Model
         'review_description',
         'is_approved',
     ];
+
+    public function subject()
+    {
+        return $this->belongsTo(Subjects::class, 'subject_id');
+    }
+
+    public function user()
+    {
+        return $this->belongsTo(User::class);
+    }
 }

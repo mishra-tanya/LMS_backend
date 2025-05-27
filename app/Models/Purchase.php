@@ -15,4 +15,14 @@ class Purchase extends Model
         'subject_id',
         'purchased_at',
     ];
+
+    public function course()
+    {
+        return $this->belongsTo(Courses::class, 'course_id');
+    }
+
+    public function user()
+    {
+        return $this->belongsTo(User::class);
+    }
 }

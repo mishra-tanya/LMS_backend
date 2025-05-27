@@ -16,4 +16,14 @@ class CourseReview extends Model
         'review_description',
         'is_approved',
     ];
+
+    public function course()
+    {
+        return $this->belongsTo(Courses::class, 'course_id');
+    }
+
+    public function user()
+    {
+        return $this->belongsTo(User::class);
+    }
 }
