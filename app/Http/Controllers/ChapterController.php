@@ -7,6 +7,7 @@ use App\Helpers\ApiResponse;
 use App\Models\Chapters;
 use App\Models\Subjects;
 use App\Models\Courses;
+use Illuminate\Support\Facades\Storage;
 
 class ChapterController extends Controller
 {
@@ -61,7 +62,7 @@ class ChapterController extends Controller
             $validated = $request->validate([
                 'chapter_name' => 'required|string|max:255',
                 'subject_id' => 'required|integer|exists:subjects,subject_id',
-                'resource_link' => 'nullable|string|max:255',
+                'pdf_file' => 'nullable|file|mimes:pdf|max:10240', // 10MB max size
             ]);
 
             // Check if chapter already exists
@@ -73,11 +74,27 @@ class ChapterController extends Controller
                 return ApiResponse::clientError('Chapter already exists', null, 409);
             }
 
-            $chapter = Chapters::create($validated);
+            $chapterData = [
+                'chapter_name' => $validated['chapter_name'],
+                'subject_id' => $validated['subject_id'],
+                'resource_link' => null, // Default to null
+            ];
+
+            // Handle PDF file upload
+            if ($request->hasFile('pdf_file')) {
+                $pdfFile = $request->file('pdf_file');
+                $fileName = time() . '_' . $pdfFile->getClientOriginalName();
+                $pdfPath = $pdfFile->storeAs('chapters_pdf', $fileName, 'public');
+                $chapterData['resource_link'] = asset('storage/' . $pdfPath);
+            }
+
+            $chapter = Chapters::create($chapterData);
 
             return ApiResponse::success('Chapter created successfully', $chapter, 201);
         } catch (\Throwable $th) {
-            if ($th instanceof \Illuminate\Database\QueryException) {
+            if ($th instanceof \Illuminate\Validation\ValidationException) {
+                return ApiResponse::clientError('Validation error: ' . $th->getMessage(), $th->errors(), 422);
+            } elseif ($th instanceof \Illuminate\Database\QueryException) {
                 return ApiResponse::serverError('Database error: ' . $th->getMessage(), null, 500);
             }
             return ApiResponse::serverError('Failed to create chapter: ' . $th->getMessage(), null, 500);
@@ -108,7 +125,7 @@ class ChapterController extends Controller
             $validated = $request->validate([
                 'chapter_name' => 'required|string|max:255',
                 'subject_id' => 'required|integer|exists:subjects,subject_id',
-                'resource_link' => 'nullable|string|max:255',
+                'pdf_file' => 'nullable|file|mimes:pdf|max:10240', // 10MB max size
             ]);
 
             $chapter = Chapters::find($chapter_id);
@@ -116,11 +133,33 @@ class ChapterController extends Controller
                 return ApiResponse::clientError('Chapter not found', null, 404);
             }
 
-            $chapter->update($validated);
+            // Handle PDF file upload
+            if ($request->hasFile('pdf_file')) {
+                // If there's an existing PDF file, extract its path from the resource_link
+                if ($chapter->resource_link) {
+                    $currentPath = str_replace(asset('storage/'), '', $chapter->resource_link);
+                    // Delete the old file if it exists
+                    if (Storage::disk('public')->exists($currentPath)) {
+                        Storage::disk('public')->delete($currentPath);
+                    }
+                }
+
+                $pdfFile = $request->file('pdf_file');
+                $fileName = time() . '_' . $pdfFile->getClientOriginalName();
+                $pdfPath = $pdfFile->storeAs('chapters_pdf', $fileName, 'public');
+                $chapter->resource_link = asset('storage/' . $pdfPath);
+            }
+
+            // Update other fields
+            $chapter->chapter_name = $validated['chapter_name'];
+            $chapter->subject_id = $validated['subject_id'];
+            $chapter->save();
 
             return ApiResponse::success('Chapter updated successfully', $chapter);
         } catch (\Throwable $th) {
-            if ($th instanceof \Illuminate\Database\QueryException) {
+            if ($th instanceof \Illuminate\Validation\ValidationException) {
+                return ApiResponse::clientError('Validation error: ' . $th->getMessage(), $th->errors(), 422);
+            } elseif ($th instanceof \Illuminate\Database\QueryException) {
                 return ApiResponse::serverError('Database error: ' . $th->getMessage(), null, 500);
             }
             return ApiResponse::serverError('Failed to update chapter: ' . $th->getMessage(), null, 500);
@@ -132,6 +171,14 @@ class ChapterController extends Controller
             $chapter = Chapters::find($chapter_id);
             if (!$chapter) {
                 return ApiResponse::clientError('Chapter not found', null, 404);
+            }
+
+            // If there's a PDF file in the resource_link, delete it
+            if ($chapter->resource_link) {
+                $filePath = str_replace(asset('storage/'), '', $chapter->resource_link);
+                if (Storage::disk('public')->exists($filePath)) {
+                    Storage::disk('public')->delete($filePath);
+                }
             }
 
             $chapter->delete();
