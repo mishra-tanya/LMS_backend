@@ -28,8 +28,14 @@ class AuthService
         if (!$user->email_verified_at) {
             return 'not_verified';
         }
+        
+        $token = JWTAuth::fromUser($user);
+        return [
+            'token' => $token,
+            'user_id' => $user->id,
+            'role' => $user->role,
+        ];
 
-        return JWTAuth::fromUser($user);
     }
 
     public function getUser(){

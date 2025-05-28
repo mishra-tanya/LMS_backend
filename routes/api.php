@@ -11,6 +11,7 @@ use App\Http\Controllers\PhonePeController;
 use App\Http\Controllers\SubjectReviewController;
 use App\Http\Controllers\CourseReviewController;
 use App\Http\Controllers\StudentController;
+use App\Http\Controllers\PurchaseController;
 
 // Auth routes
 Route::post('/login', [AuthController::class, 'login'])->name('login');
@@ -33,11 +34,18 @@ Route::get('/password/reset/{token}', function ($token) {
 Route::middleware('auth:api')->group(function () {
     Route::get('/me', [AuthController::class, 'me']);
     Route::post('/logout', [AuthController::class, 'logout']);
+
+    Route::post('/phonepe-initiate', [PhonePeController::class, 'initiate']);
+
+    Route::get('/user-purchase-history', [PurchaseController::class, 'getUserPurchaseHistory']);
+
 });
 
 // phonepe payments
-Route::post('/phonepe-initiate', [PhonePeController::class, 'initiate']);
 Route::post('/phonepe-callback', [PhonePeController::class, 'callback'])->name('phonepe.callback');
+
+// Purchase history
+Route::get('/purchase-history', [PurchaseController::class, 'getAllPurchaseHistory']);
 
 // Course routes
 Route::get('/courses', [CourseController::class, 'getCourses']);

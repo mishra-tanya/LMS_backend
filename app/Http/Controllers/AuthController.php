@@ -35,17 +35,21 @@ class AuthController extends Controller
             'password' => 'required|string|min:6',
         ]);
         $credentials = $request->only('email', 'password');
-        $token = $this->authService->login($credentials);
+        $result = $this->authService->login($credentials);
 
-        if ($token === 'not_verified') {
+        if ($result === 'not_verified') {
             return ApiResponse::error('Email not verified', null, 403);
         }
 
-        if (!$token) {
+        if (!$result) {
             return ApiResponse::error('Invalid credentials', null, 401);
         }
 
-        return ApiResponse::success('Login successful', ['token' => $token], 201);
+        return ApiResponse::success('Login successful', [
+        'token' => $result['token'],
+        'user_id' => $result['user_id'],
+        'role' => $result['role'],
+    ], 201);
     }
 
     // fetching user

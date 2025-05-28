@@ -95,7 +95,7 @@ class CourseReviewController extends Controller
                 return ApiResponse::clientError('Course review not found', null, 404);
             }
 
-            $review->update(['approved' => true]);
+            $review->update(['is_approved' => true]);
 
             return ApiResponse::success('Course review approved successfully', $review);
         } catch (\Throwable $th) {
@@ -139,7 +139,7 @@ class CourseReviewController extends Controller
     public function getApprovedCourseReviews()
     {
         try {
-            $reviews = CourseReview::where('approved', true)->get();
+            $reviews = CourseReview::where('is_approved', true)->get();
 
             if ($reviews->isEmpty()) {
                 return ApiResponse::clientError('No approved course reviews found', null, 404);

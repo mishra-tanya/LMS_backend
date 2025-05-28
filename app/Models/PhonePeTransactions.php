@@ -14,6 +14,13 @@ class PhonePeTransactions extends Model
         'transaction_id',
         'amount',
         'status',
-        'merchant_transaction_id'
+        'merchant_transaction_id',
+        'purchased_at'
     ];
+
+    public function user()
+    {
+        return $this->belongsTo(User::class, 'user_id');
+    }
+
 }

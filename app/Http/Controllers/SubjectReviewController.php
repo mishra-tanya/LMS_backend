@@ -95,7 +95,7 @@ class SubjectReviewController extends Controller
                 return ApiResponse::clientError('Subject review not found', null, 404);
             }
 
-            $review->update(['approved' => true]);
+            $review->update(['is_approved' => true]);
 
             return ApiResponse::success('Subject review approved successfully', $review);
         } catch (\Throwable $th) {
@@ -139,7 +139,7 @@ class SubjectReviewController extends Controller
     public function getApprovedSubjectReviews()
     {
         try {
-            $reviews = SubjectReview::where('approved', true)->get();
+            $reviews = SubjectReview::where('is_approved', true)->get();
 
             if ($reviews->isEmpty()) {
                 return ApiResponse::clientError('No approved subject reviews found', null, 404);

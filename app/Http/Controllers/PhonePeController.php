@@ -19,7 +19,7 @@ class PhonePeController extends Controller
 {
     public function initiate(Request $request){
          try {
-        $user = JWTAuth::parseToken()->authenticate();
+        $user = Auth::user();
 
         if (!$user) {
             return ApiResponse::unauthorized('User not authenticated.');
