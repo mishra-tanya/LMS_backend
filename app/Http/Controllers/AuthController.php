@@ -30,6 +30,10 @@ class AuthController extends Controller
 
     // login
     public function login(Request $request): JsonResponse{
+        $request->validate([
+            'email' => 'required|email',
+            'password' => 'required|string|min:6',
+        ]);
         $credentials = $request->only('email', 'password');
         $token = $this->authService->login($credentials);
 
@@ -57,14 +61,16 @@ class AuthController extends Controller
 
     // email verify
     public function verifyEmail($id, $hash){
-        $user = User::findOrFail($id); 
+        $user = User::where('id', $id)->firstOrFail();
 
         if ($user->hasVerifiedEmail()) {
             return response()->json(['message' => 'Email already verified.'], 200);
         }
 
         if ($user->markEmailAsVerified()) {
-            event(new Verified($user));
+            if ($user instanceof \Illuminate\Contracts\Auth\MustVerifyEmail) {
+                event(new Verified($user));
+            }
         }
 
         return response()->json(['message' => 'Email verified successfully.'], 200);

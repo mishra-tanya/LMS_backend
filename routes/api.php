@@ -3,19 +3,14 @@
 use App\Http\Controllers\CourseController;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
-use Illuminate\Foundation\Auth\EmailVerificationRequest;
-
 use App\Http\Controllers\AuthController;
 use App\Http\Controllers\ForgotPasswordController;
 use App\Http\Controllers\SubjectController;
 use App\Http\Controllers\ChapterController;
-
-use App\Http\Controllers\ReviewController;
 use App\Http\Controllers\PhonePeController;
-
 use App\Http\Controllers\SubjectReviewController;
 use App\Http\Controllers\CourseReviewController;
-use App\Http\Controllers\CourseSemesterController;
+use App\Http\Controllers\StudentController;
 
 // Auth routes
 Route::post('/login', [AuthController::class, 'login'])->name('login');
@@ -90,4 +85,14 @@ Route::delete('/coursereviews/{review_id}', [SubjectReviewController::class, 'de
 Route::get('/subjectreviews/approved', [SubjectReviewController::class, 'getApprovedSubjectReviews']);
 Route::put('/subjectreviews/{review_id}/approve', [SubjectReviewController::class, 'approveSubjectReview']);
 
+
+// student Routes 
+Route::middleware('auth:api')->prefix('student')->group(function () {
+    Route::get('/profile', [StudentController::class, 'getProfile']);
+    Route::put('/profile', [StudentController::class, 'updateProfile']);
+    Route::post('/change-password', [StudentController::class, 'changePassword']);
+    Route::get('/purchased-courses', [StudentController::class, 'getPurchasedCourses']);
+    Route::get('/payment-history', [StudentController::class, 'getPaymentHistory']);
+    Route::get('/my-reviews', [StudentController::class, 'getMyReviews']);    
+});
 

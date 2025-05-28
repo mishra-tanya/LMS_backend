@@ -15,7 +15,7 @@ class CourseReviewController extends Controller
     {
         try {
             $validator = Validator::make($request->all(), [
-                'course_id' => 'required|exists:courses,id',
+                'course_id' => 'required|exists:courses,course_id',
                 'user_id' => 'required|exists:users,id',
                 'rating' => 'required|numeric|min:1|max:5',
                 'review_description' => 'nullable|string|max:1000',
@@ -70,7 +70,7 @@ class CourseReviewController extends Controller
             $reviews = CourseReview::where('course_id', $course_id)->get();
 
             if ($reviews->isEmpty()) {
-                return ApiResponse::clientError('No reviews found for this course', null, A404);
+                return ApiResponse::clientError('No reviews found for this course', null, 404);
             }
 
             return ApiResponse::success('Course reviews retrieved successfully', $reviews);
