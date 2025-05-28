@@ -12,7 +12,7 @@ return new class extends Migration
     public function up(): void
     {
        Schema::create('phonepetransaction', function (Blueprint $table) {
-            $table->id();
+            $table->id('purchase_id');
             $table->unsignedBigInteger('user_id');
             $table->string('payment_type');
             $table->string('course_or_subject_id');
@@ -20,8 +20,9 @@ return new class extends Migration
             $table->string('merchant_transaction_id')->unique()->nullable(); 
             $table->decimal('amount', 10, 2)->default(0);
             $table->string('status')->default('initiated'); 
-            $table->foreign('user_id')->references('id')->on('users')->onDelete('cascade');
 
+            $table->foreign('user_id')->references('id')->on('users')->onDelete('cascade');
+            $table->timestamp('purchased_at')->useCurrent();
             $table->timestamps();
         });
     }

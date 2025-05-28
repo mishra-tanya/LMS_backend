@@ -18,7 +18,7 @@ use App\Http\Controllers\CourseReviewController;
 use App\Http\Controllers\CourseSemesterController;
 
 // Auth routes
-Route::post('/login', [AuthController::class, 'login']);
+Route::post('/login', [AuthController::class, 'login'])->name('login');
 Route::post('/register', [AuthController::class, 'register']);
 
 Route::post('/email/verification-notification', function (Request $request) {
