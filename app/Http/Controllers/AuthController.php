@@ -30,6 +30,10 @@ class AuthController extends Controller
 
     // login
     public function login(Request $request): JsonResponse{
+        $request->validate([
+            'email' => 'required|email',
+            'password' => 'required|string|min:6',
+        ]);
         $credentials = $request->only('email', 'password');
         $token = $this->authService->login($credentials);
 
