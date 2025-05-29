@@ -8,7 +8,8 @@ use Illuminate\Database\Eloquent\Model;
 class SubjectReview extends Model
 {
     use HasFactory;
-
+    protected $primaryKey = 'review_id';
+    
     protected $fillable = [
         'subject_id',
         'user_id',

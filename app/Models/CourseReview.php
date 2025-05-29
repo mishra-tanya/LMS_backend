@@ -9,6 +9,7 @@ class CourseReview extends Model
 {
     use HasFactory;
 
+    protected $primaryKey = 'review_id';
     protected $fillable = [
         'course_id',
         'user_id',
