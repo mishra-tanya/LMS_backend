@@ -23,4 +23,13 @@ class PhonePeTransactions extends Model
         return $this->belongsTo(User::class, 'user_id');
     }
 
+    public function course()
+    {
+        return $this->belongsTo(Courses::class, 'course_or_subject_id', 'course_id');
+    }
+
+    public function subject()
+    {
+        return $this->belongsTo(Subjects::class, 'course_or_subject_id', 'subject_id');
+    }
 }

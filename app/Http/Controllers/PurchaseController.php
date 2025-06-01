@@ -17,24 +17,44 @@ class PurchaseController extends Controller
     public function getAllPurchaseHistory(): JsonResponse
     {
         try {
-            $history = PhonePeTransactions::with('user:id,name,email') 
+            $history = PhonePeTransactions::with([
+                            'user:id,name,email', 
+                            'course', 
+                            'subject'
+                        ])
                         ->orderBy('purchased_at', 'desc')
                         ->get();
 
             if ($history->isEmpty()) {
                 return ApiResponse::clientError('No purchase history found');
             }
+
+            $history = $history->map(function ($item) {
+                $item->course_or_subject = null;
+                if ($item->payment_type === 'course' && $item->course) {
+                    $item->course_or_subject = $item->course;
+                } elseif ($item->payment_type === 'subject' && $item->subject) {
+                    $item->course_or_subject = $item->subject;
+                }
+
+                unset($item->course);
+                unset($item->subject);
+
+                return $item;
+            });
+
             return ApiResponse::success('Purchase history fetched successfully', $history);
 
         } catch (\Exception $e) {
             return ApiResponse::serverError('Failed to fetch purchase history', [
-               'error' => $e->getMessage()
+            'error' => $e->getMessage()
             ]);
         }
+
     }
 
     // user specific purchase history
-     public function getUserPurchaseHistory(): JsonResponse
+    public function getUserPurchaseHistory(): JsonResponse
     {
         try {
             $user  = Auth::user();
@@ -43,13 +63,32 @@ class PurchaseController extends Controller
                 return ApiResponse::unauthorized('User not logged in');
             }
 
-            $history =  PhonePeTransactions::where('user_id', $user->id)
+            $history = PhonePeTransactions::with([
+                            'user:id,name,email',
+                            'course',
+                            'subject'
+                        ])
+                        ->where('user_id', $user->id)
                         ->orderBy('purchased_at', 'desc')
                         ->get();
 
             if ($history->isEmpty()) {
                 return ApiResponse::clientError('No purchase history found');
             }
+
+            $history = $history->map(function ($item) {
+                $item->course_or_subject = null;
+                if ($item->payment_type === 'course' && $item->course) {
+                    $item->course_or_subject = $item->course;
+                } elseif ($item->payment_type === 'subject' && $item->subject) {
+                    $item->course_or_subject = $item->subject;
+                }
+
+                unset($item->course);
+                unset($item->subject);
+
+                return $item;
+            });
 
             return ApiResponse::success('Purchase history fetched successfully', $history);
 
@@ -59,6 +98,5 @@ class PurchaseController extends Controller
             ]);
         }
     }
-
 
 }
