@@ -12,6 +12,7 @@ use App\Http\Controllers\SubjectReviewController;
 use App\Http\Controllers\CourseReviewController;
 use App\Http\Controllers\StudentController;
 use App\Http\Controllers\PurchaseController;
+use App\Http\Controllers\FeaturedCourseOrSubjectController;
 
 // Auth routes
 Route::post('/login', [AuthController::class, 'login'])->name('login');
@@ -46,6 +47,9 @@ Route::post('/phonepe-callback', [PhonePeController::class, 'callback'])->name('
 
 // Purchase history
 Route::get('/purchase-history', [PurchaseController::class, 'getAllPurchaseHistory']);
+
+// featured courses 
+Route::get('/featuredCourseOrSubject', [FeaturedCourseOrSubjectController::class, 'getFeaturedCourseOrSubject']);
 
 // Course routes
 Route::get('/courses', [CourseController::class, 'getCourses']);

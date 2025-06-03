@@ -17,4 +17,8 @@ class Subjects extends Model
         'price', // New field
         'discount' // New field
     ];
+    public function reviews()
+    {
+        return $this->hasMany(SubjectReview::class, 'subject_id', 'subject_id');
+    }
 }

@@ -7,6 +7,7 @@ use App\Models\Subjects;
 use App\Models\Courses;
 use App\Models\Chapters;
 use App\Models\SubjectReview;
+use App\Models\PhonePeTransactions;
 
 class SubjectController extends Controller
 {
@@ -14,7 +15,9 @@ class SubjectController extends Controller
     public function getSubjects()
     {
         try {
-            $subjects = Subjects::all();
+            // $subjects = Subjects::all();
+            $subjects = Subjects::withAvg('reviews as average_rating', 'rating')->get();
+
             if ($subjects->isEmpty()) {
                 return ApiResponse::clientError('No subjects found', null, 404);
             }
@@ -39,6 +42,11 @@ class SubjectController extends Controller
             // Fetch all chapters associated with the subject
             $chapters = Chapters::where('subject_id', $id)->get();
 
+            $totalUsers = PhonePeTransactions::where('payment_type', 'subject')
+            ->where('course_or_subject_id', $id)
+            ->where('status','success')
+            ->count();
+
             // Prepare detailed subject information
             $subjectDetails = [
                 'subject_name' => $subject->subject_name,
@@ -48,6 +56,7 @@ class SubjectController extends Controller
                 'price' => $subject->price,
                 'discount' => $subject->discount,
                 'chapters' => $chapters,
+                'totalUsers' => $totalUsers,
             ];
 
             return ApiResponse::success('Subject details retrieved successfully', $subjectDetails);

@@ -6,7 +6,7 @@ use App\Helpers\ApiResponse;
 use App\Models\Courses;
 use App\Models\Subjects;
 use App\Models\CourseReview;
-use App\Models\Purchase;
+use App\Models\PhonePeTransactions;
 use Illuminate\Http\Request;
 
 class CourseController extends Controller
@@ -15,7 +15,9 @@ class CourseController extends Controller
     public function getCourses()
     {
         try {
-            $courses = Courses::all();
+            // $courses = Courses::all();
+            $courses = Courses::withAvg('reviews as average_rating', 'rating')->get();
+
             if ($courses->isEmpty()) {
                 return ApiResponse::clientError('No courses found', null, 404);
             }
@@ -43,7 +45,10 @@ class CourseController extends Controller
             $subjects = Subjects::where('course_id', $id)->get();
 
             // Fetch total users who bought the course
-            $totalUsers = Purchase::where('course_id', $id)->count();
+           $totalUsers = PhonePeTransactions::where('payment_type', 'course')
+            ->where('course_or_subject_id', $id)
+            ->where('status','success')
+            ->count();
 
             // Calculate overall rating for the course
             $overallRating = CourseReview::where('course_id', $id)->avg('rating');
@@ -52,6 +57,7 @@ class CourseController extends Controller
             $courseDetails = [
                 'course_name' => $course->course_name,
                 'course_description' => $course->description,
+                'price'=> $course->price,
                 'semester' => $course->semester,
                 'image' => $course->image ? url('storage/' . $course->image) : null,
                 'total_subjects' => $subjects->count(),
