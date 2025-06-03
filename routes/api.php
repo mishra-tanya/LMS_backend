@@ -93,7 +93,7 @@ Route::post('/subjectreviews', [SubjectReviewController::class, 'createSubjectRe
 Route::get('/subjectreviews', [SubjectReviewController::class, 'getSubjectReviews']);
 Route::get('/subjectreviews/subject/{subject_id}', [SubjectReviewController::class, 'getReviewsBySubjectId']);
 Route::put('/subjectreviews/{review_id}', [SubjectReviewController::class, 'approveSubjectReview']);
-Route::delete('/coursereviews/{review_id}', [SubjectReviewController::class, 'deleteSubjectReview']);
+Route::delete('/subjectreviews/{review_id}', [SubjectReviewController::class, 'deleteSubjectReview']);
 Route::get('/subjectreviews/approved', [SubjectReviewController::class, 'getApprovedSubjectReviews']);
 Route::put('/subjectreviews/{review_id}/approve', [SubjectReviewController::class, 'approveSubjectReview']);
 
