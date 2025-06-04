@@ -27,4 +27,10 @@ class Courses extends Model
     {
         return $this->hasMany(CourseReview::class, 'course_id', 'course_id');
     }
+    
+    public function approvedReviews()
+    {
+        return $this->hasMany(CourseReview::class, 'course_id', 'course_id')
+                    ->where('is_approved', true);
+    }
 }

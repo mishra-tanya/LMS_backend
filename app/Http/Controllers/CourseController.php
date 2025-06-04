@@ -16,7 +16,7 @@ class CourseController extends Controller
     {
         try {
             // $courses = Courses::all();
-            $courses = Courses::withAvg('reviews as average_rating', 'rating')->get();
+            $courses = Courses::withAvg('approvedReviews as average_rating', 'rating')->get();
 
             if ($courses->isEmpty()) {
                 return ApiResponse::clientError('No courses found', null, 404);

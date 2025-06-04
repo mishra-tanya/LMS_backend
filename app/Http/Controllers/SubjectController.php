@@ -16,7 +16,7 @@ class SubjectController extends Controller
     {
         try {
             // $subjects = Subjects::all();
-            $subjects = Subjects::withAvg('reviews as average_rating', 'rating')->get();
+            $subjects = Subjects::withAvg('approvedReviews as average_rating', 'rating')->get();
 
             if ($subjects->isEmpty()) {
                 return ApiResponse::clientError('No subjects found', null, 404);

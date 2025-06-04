@@ -25,9 +25,16 @@ class FeaturedCourseOrSubjectController extends Controller
 
             $results = $topItems->map(function ($item) {
                 if ($item->payment_type === 'course') {
-                    $details = Courses::where('course_id', $item->course_or_subject_id)->first();
+                    // $details = Courses::where('course_id', $item->course_or_subject_id)->first();
+                    $details = Courses::withAvg('approvedReviews as average_rating', 'rating')
+                    ->where('course_id', $item->course_or_subject_id)
+                    ->first();
+
                 } else {
-                    $details = Subjects::where('subject_id', $item->course_or_subject_id)->first();
+                    // $details = Subjects::where('subject_id', $item->course_or_subject_id)->first();
+                      $details = Subjects::withAvg('approvedReviews as average_rating', 'rating')
+                        ->where('subject_id', $item->course_or_subject_id)
+                        ->first();
                 }
 
                 return [

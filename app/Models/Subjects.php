@@ -21,4 +21,10 @@ class Subjects extends Model
     {
         return $this->hasMany(SubjectReview::class, 'subject_id', 'subject_id');
     }
+
+    public function approvedReviews()
+    {
+        return $this->hasMany(SubjectReview::class, 'subject_id', 'subject_id')
+                    ->where('is_approved', true);
+    }
 }
