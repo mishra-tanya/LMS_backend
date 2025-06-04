@@ -13,6 +13,8 @@ use App\Http\Controllers\CourseReviewController;
 use App\Http\Controllers\StudentController;
 use App\Http\Controllers\PurchaseController;
 use App\Http\Controllers\FeaturedCourseOrSubjectController;
+use App\Http\Controllers\StatisticsController;
+
 
 // Auth routes
 Route::post('/login', [AuthController::class, 'login'])->name('login');
@@ -50,6 +52,9 @@ Route::get('/purchase-history', [PurchaseController::class, 'getAllPurchaseHisto
 
 // featured courses 
 Route::get('/featuredCourseOrSubject', [FeaturedCourseOrSubjectController::class, 'getFeaturedCourseOrSubject']);
+
+// statistics
+Route::get('/statistics', [StatisticsController::class, 'getStatistics']);
 
 // Course routes
 Route::get('/courses', [CourseController::class, 'getCourses']);
