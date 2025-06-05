@@ -16,7 +16,9 @@ class CourseController extends Controller
     {
         try {
             // $courses = Courses::all();
-            $courses = Courses::withAvg('approvedReviews as average_rating', 'rating')->get();
+            $courses = Courses::withAvg('approvedReviews as average_rating', 'rating')
+                ->withCount('approvedReviews as total_reviews')
+                ->get();
 
             if ($courses->isEmpty()) {
                 return ApiResponse::clientError('No courses found', null, 404);
@@ -51,7 +53,13 @@ class CourseController extends Controller
             ->count();
 
             // Calculate overall rating for the course
-            $overallRating = CourseReview::where('course_id', $id)->avg('rating');
+            $reviewStats = CourseReview::where('course_id', $id)
+                ->where('is_approved', true)
+                ->selectRaw('AVG(rating) as overall_rating, COUNT(*) as total_review')
+                ->first();
+
+            $overallRating = $reviewStats->overall_rating;
+            $totalReview = $reviewStats->total_review;
 
             // Prepare detailed course information
             $courseDetails = [
@@ -64,6 +72,7 @@ class CourseController extends Controller
                 'subjects' => $subjects,
                 'total_users' => $totalUsers,
                 'overall_rating' => $overallRating,
+                'total_review_count' => $totalReview
             ];
 
             return ApiResponse::success('Course details retrieved successfully', $courseDetails);

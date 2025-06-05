@@ -16,7 +16,9 @@ class SubjectController extends Controller
     {
         try {
             // $subjects = Subjects::all();
-            $subjects = Subjects::withAvg('approvedReviews as average_rating', 'rating')->get();
+            $subjects = Subjects::withAvg('approvedReviews as average_rating', 'rating')
+                ->withCount('approvedReviews as total_reviews')
+                ->get();
 
             if ($subjects->isEmpty()) {
                 return ApiResponse::clientError('No subjects found', null, 404);
@@ -42,6 +44,14 @@ class SubjectController extends Controller
             // Fetch all chapters associated with the subject
             $chapters = Chapters::where('subject_id', $id)->get();
 
+            $reviewStats = SubjectReview::where('subject_id', $id)
+                ->where('is_approved', true)
+                ->selectRaw('AVG(rating) as overall_rating, COUNT(*) as total_review')
+                ->first();
+
+            $overallRating = $reviewStats->overall_rating;
+            $totalReview = $reviewStats->total_review;
+                        
             $totalUsers = PhonePeTransactions::where('payment_type', 'subject')
             ->where('course_or_subject_id', $id)
             ->where('status','success')
@@ -57,6 +67,8 @@ class SubjectController extends Controller
                 'discount' => $subject->discount,
                 'chapters' => $chapters,
                 'totalUsers' => $totalUsers,
+                'overall_rating' => $overallRating,
+                'total_review_count' => $totalReview
             ];
 
             return ApiResponse::success('Subject details retrieved successfully', $subjectDetails);
