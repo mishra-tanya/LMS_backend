@@ -96,6 +96,8 @@ class PhonePeController extends Controller
 
     public function callback(Request $request){
         $payload = $request->all();
+        $frontendUrl = env('APP_BASE_PATH');
+
 // dd($payload);
         try {
             $status = $payload['code'] ?? null;
@@ -116,31 +118,36 @@ class PhonePeController extends Controller
                 $phonepePayment->merchant_transaction_id =  $merchantTransactionId;
                 
                 $phonepePayment->save();
+                return redirect()->away("{$frontendUrl}/payment-status?status=success&order_id={$merchantTransactionId}&payment_id={$transactionId}");
 
-                return ApiResponse::success('Payment successful.', [
-                    'transaction_id' => $transactionId,
-                    'merchant_transaction_id' => $merchantTransactionId,
-                ]);
+                // return ApiResponse::success('Payment successful.', [
+                //     'transaction_id' => $transactionId,
+                //     'merchant_transaction_id' => $merchantTransactionId,
+                // ]);
             }
 
             if ($status === 'PAYMENT_ERROR') {
                 $phonepePayment->status = 'failed';
                 $phonepePayment->save();
 
-                return ApiResponse::clientError('Payment failed.', [
-                    'transaction_id' => $transactionId,
-                    'merchant_transaction_id' => $merchantTransactionId,
-                ]);
+                return redirect()->away("{$frontendUrl}/payment-status?status=failed&transaction_id={$transactionId}}");
+
+                // return ApiResponse::clientError('Payment failed.', [
+                //     'transaction_id' => $transactionId,
+                //     'merchant_transaction_id' => $merchantTransactionId,
+                // ]);
             }
 
             if ($status === 'PAYMENT_PENDING') {
                 $phonepePayment->status = 'pending';
                 $phonepePayment->save();
 
-                return ApiResponse::clientError('Payment Pending.', [
-                    'transaction_id' => $transactionId,
-                    'merchant_transaction_id' => $merchantTransactionId,
-                ]);
+                return redirect()->away("{$frontendUrl}/payment-status?status=pending&transaction_id={$transactionId}}");
+
+                // return ApiResponse::clientError('Payment Pending.', [
+                //     'transaction_id' => $transactionId,
+                //     'merchant_transaction_id' => $merchantTransactionId,
+                // ]);
             }
 
             return ApiResponse::clientError('Unknown payment status.', $payload, 400);

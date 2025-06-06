@@ -28,12 +28,13 @@ class FeaturedCourseOrSubjectController extends Controller
                     // $details = Courses::where('course_id', $item->course_or_subject_id)->first();
                     $details = Courses::withAvg('approvedReviews as average_rating', 'rating')
                     ->where('course_id', $item->course_or_subject_id)
+                    ->withCount('approvedReviews as total_reviews')
                     ->first();
-
                 } else {
                     // $details = Subjects::where('subject_id', $item->course_or_subject_id)->first();
                       $details = Subjects::withAvg('approvedReviews as average_rating', 'rating')
                         ->where('subject_id', $item->course_or_subject_id)
+                        ->withCount('approvedReviews as total_reviews')
                         ->first();
                 }
 

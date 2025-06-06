@@ -7,7 +7,9 @@ use Illuminate\Http\Request;
 use App\Models\User;
 use App\Models\CourseReview;
 use App\Models\SubjectReview;
-use App\Models\Purchase;
+use App\Models\Courses;
+use App\Models\Subjects;
+use App\Models\PhonePeTransactions;
 use App\Models\Payment;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Hash;
@@ -111,32 +113,59 @@ class StudentController extends Controller
     }
     
     // Get student's purchased courses
-    public function getPurchasedCourses()
+   public function getPurchasedCourses()
     {
         try {
             $user = Auth::user();
-            
+
             if (!$user) {
                 return ApiResponse::clientError('User not authenticated', null, 401);
             }
-            
-            $purchases = Purchase::with('course')
-                ->where('user_id', $user->id)
+
+            $purchases = PhonePeTransactions::where('user_id', $user->id)
+                ->where('status','success')
+                ->orderByDesc('created_at')
                 ->get();
-            
+
             if ($purchases->isEmpty()) {
                 return ApiResponse::clientError('No purchased courses found', null, 404);
             }
-            
+
+            $purchases = $purchases->map(function ($item) {
+                $item->course_or_subject_details = null;
+
+                if ($item->payment_type === 'course') {
+                    $details = Courses::withAvg('approvedReviews as average_rating', 'rating')
+                        ->withCount('approvedReviews as total_reviews')
+                        ->where('course_id', $item->course_or_subject_id)
+                        ->first();
+                } elseif ($item->payment_type === 'subject') {
+                    $details = Subjects::withAvg('approvedReviews as average_rating', 'rating')
+                        ->withCount('approvedReviews as total_reviews')
+                        ->where('subject_id', $item->course_or_subject_id)
+                        ->first();
+                } else {
+                    $details = null;
+                }
+
+                if ($details) {
+                    $item->course_or_subject_details = $details;
+                }
+
+                return $item;
+            });
+
             return ApiResponse::success('Purchased courses retrieved successfully', $purchases);
+
         } catch (\Throwable $th) {
-            if ($th instanceof QueryException) {
+            if ($th instanceof \Illuminate\Database\QueryException) {
                 return ApiResponse::serverError('Database error: ' . $th->getMessage(), null, 500);
-            } else {
-                return ApiResponse::serverError('Failed to retrieve purchased courses: ' . $th->getMessage(), null, 500);
             }
+
+            return ApiResponse::serverError('Failed to retrieve purchased courses: ' . $th->getMessage(), null, 500);
         }
     }
+
     
     // Get student's payment history
     public function getPaymentHistory()
