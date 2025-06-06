@@ -13,6 +13,7 @@ class Subjects extends Model
         'subject_id', // Explicitly include subject_id
         'subject_name',
         'course_id',
+        'description',
         'image',
         'price', // New field
         'discount' // New field
