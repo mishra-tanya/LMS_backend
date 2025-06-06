@@ -41,6 +41,8 @@ class ChapterController extends Controller
                     return [
                         'chapter_id' => $chapter->chapter_id,
                         'chapter_name' => $chapter->chapter_name,
+                        'description' => $chapter->description,
+                        'image' => $chapter->image ? url('storage/' . $chapter->image) : null,
                         'resource_link' => $chapter->resource_link,
                         'created_at' => $chapter->created_at,
                         'updated_at' => $chapter->updated_at
@@ -62,6 +64,8 @@ class ChapterController extends Controller
             $validated = $request->validate([
                 'chapter_name' => 'required|string|max:255',
                 'subject_id' => 'required|integer|exists:subjects,subject_id',
+                'description' => 'nullable|string|max:1000',
+                'image' => 'nullable|image|mimes:jpeg,png,jpg,gif|max:2048',
                 'pdf_file' => 'nullable|file|mimes:pdf|max:10240', // 10MB max size
             ]);
 
@@ -77,15 +81,25 @@ class ChapterController extends Controller
             $chapterData = [
                 'chapter_name' => $validated['chapter_name'],
                 'subject_id' => $validated['subject_id'],
+                'description' => $validated['description'] ?? null,
                 'resource_link' => null, // Default to null
+                'image' => null, // Default to null
             ];
 
-            // Handle PDF file upload
+            // Handle PDF file upload - storing publicly
             if ($request->hasFile('pdf_file')) {
                 $pdfFile = $request->file('pdf_file');
                 $fileName = time() . '_' . $pdfFile->getClientOriginalName();
                 $pdfPath = $pdfFile->storeAs('chapters_pdf', $fileName, 'public');
-                $chapterData['resource_link'] = asset('storage/' . $pdfPath);
+                
+                // Store the public URL for direct access
+                $chapterData['resource_link'] = url('storage/' . $pdfPath);
+            }
+
+            // Handle image upload if provided
+            if ($request->hasFile('image')) {
+                $imagePath = $request->file('image')->store('chapter_images', 'public');
+                $chapterData['image'] = $imagePath;
             }
 
             $chapter = Chapters::create($chapterData);
@@ -125,6 +139,8 @@ class ChapterController extends Controller
             $validated = $request->validate([
                 'chapter_name' => 'required|string|max:255',
                 'subject_id' => 'required|integer|exists:subjects,subject_id',
+                'description' => 'nullable|string|max:1000',
+                'image' => 'nullable|image|mimes:jpeg,png,jpg,gif|max:2048',
                 'pdf_file' => 'nullable|file|mimes:pdf|max:10240', // 10MB max size
             ]);
 
@@ -133,26 +149,39 @@ class ChapterController extends Controller
                 return ApiResponse::clientError('Chapter not found', null, 404);
             }
 
-            // Handle PDF file upload
+            // Handle PDF file upload - store publicly
             if ($request->hasFile('pdf_file')) {
-                // If there's an existing PDF file, extract its path from the resource_link
+                // If there's an existing PDF file, delete it from public storage
                 if ($chapter->resource_link) {
-                    $currentPath = str_replace(asset('storage/'), '', $chapter->resource_link);
-                    // Delete the old file if it exists
-                    if (Storage::disk('public')->exists($currentPath)) {
-                        Storage::disk('public')->delete($currentPath);
-                    }
+                    // Extract the filename from the URL
+                    $path = parse_url($chapter->resource_link, PHP_URL_PATH);
+                    $relativePath = str_replace('/storage/', '', $path);
+                    Storage::disk('public')->delete($relativePath);
                 }
 
                 $pdfFile = $request->file('pdf_file');
                 $fileName = time() . '_' . $pdfFile->getClientOriginalName();
                 $pdfPath = $pdfFile->storeAs('chapters_pdf', $fileName, 'public');
-                $chapter->resource_link = asset('storage/' . $pdfPath);
+                
+                // Store the public URL
+                $chapter->resource_link = url('storage/' . $pdfPath);
+            }
+
+            // Handle image upload if provided
+            if ($request->hasFile('image')) {
+                // If there's an existing image, delete it from public storage
+                if ($chapter->image) {
+                    Storage::disk('public')->delete($chapter->image);
+                }
+
+                $imagePath = $request->file('image')->store('chapter_images', 'public');
+                $chapter->image = $imagePath;
             }
 
             // Update other fields
             $chapter->chapter_name = $validated['chapter_name'];
             $chapter->subject_id = $validated['subject_id'];
+            $chapter->description = $validated['description'] ?? $chapter->description;
             $chapter->save();
 
             return ApiResponse::success('Chapter updated successfully', $chapter);
@@ -173,12 +202,17 @@ class ChapterController extends Controller
                 return ApiResponse::clientError('Chapter not found', null, 404);
             }
 
-            // If there's a PDF file in the resource_link, delete it
+            // If there's a PDF file in the resource_link, delete it from public storage
             if ($chapter->resource_link) {
-                $filePath = str_replace(asset('storage/'), '', $chapter->resource_link);
-                if (Storage::disk('public')->exists($filePath)) {
-                    Storage::disk('public')->delete($filePath);
-                }
+                // Extract the filename from the URL
+                $path = parse_url($chapter->resource_link, PHP_URL_PATH);
+                $relativePath = str_replace('/storage/', '', $path);
+                Storage::disk('public')->delete($relativePath);
+            }
+
+            // If there's an image file, delete it from public storage
+            if ($chapter->image) {
+                Storage::disk('public')->delete($chapter->image);
             }
 
             $chapter->delete();
@@ -233,6 +267,8 @@ class ChapterController extends Controller
                 $result[$subject_id]['chapters'][] = [
                     'chapter_id' => $chapter->chapter_id,
                     'chapter_name' => $chapter->chapter_name,
+                    'description' => $chapter->description,
+                    'image' => $chapter->image ? url('storage/' . $chapter->image) : null,
                     'resource_link' => $chapter->resource_link,
                     'created_at' => $chapter->created_at,
                     'updated_at' => $chapter->updated_at

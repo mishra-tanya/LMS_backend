@@ -76,12 +76,11 @@ Route::delete('/subjects/{id}', [SubjectController::class, 'deleteSubject']);
 // Chapter routes
 Route::get('/chapters', [ChapterController::class, 'getChapters']);
 Route::get('/chapters/subject/{subject_id}', [ChapterController::class, 'getChaptersBySubjectId']);
-Route::get('/chapters/course/{course_id}', [ChapterController::class, 'getChaptersByCourseId']); // New route
+Route::get('/chapters/course/{course_id}', [ChapterController::class, 'getChaptersByCourseId']); 
 Route::get('/chapters/{id}', [ChapterController::class, 'getChapterById']);
 Route::post('/chapters', [ChapterController::class, 'createChapter']);
 Route::put('/chapters/{id}', [ChapterController::class, 'updateChapter']);
 Route::delete('/chapters/{id}', [ChapterController::class, 'deleteChapter']);
-
 
 
 // course Review routes

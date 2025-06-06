@@ -23,7 +23,24 @@ class SubjectController extends Controller
             if ($subjects->isEmpty()) {
                 return ApiResponse::clientError('No subjects found', null, 404);
             }
-            return ApiResponse::success('Subjects retrieved successfully', $subjects);
+            
+            // Transform subjects to include price and discount explicitly
+            $subjectsWithPricing = $subjects->map(function ($subject) {
+                return [
+                    'subject_id' => $subject->subject_id,
+                    'subject_name' => $subject->subject_name,
+                    'course_id' => $subject->course_id,
+                    'description' => $subject->description,
+                    'resource_link' => $subject->resource_link,
+                    'image' => $subject->image ? url('storage/' . $subject->image) : null,
+                    'price' => $subject->price,
+                    'discount' => $subject->discount,
+                    'average_rating' => $subject->average_rating,
+                    'total_reviews' => $subject->total_reviews,
+                ];
+            });
+            
+            return ApiResponse::success('Subjects retrieved successfully', $subjectsWithPricing);
         } catch (\Throwable $th) {
             if ($th instanceof \Illuminate\Database\QueryException) {
                 return ApiResponse::serverError('Database error: ' . $th->getMessage(), null, 500);
@@ -61,6 +78,7 @@ class SubjectController extends Controller
             $subjectDetails = [
                 'subject_name' => $subject->subject_name,
                 'course_id' => $subject->course_id,
+                'description' => $subject->description,
                 'image' => $subject->image ? url('storage/' . $subject->image) : null,
                 'resource_link' => $subject->resource_link,
                 'price' => $subject->price,
@@ -84,7 +102,22 @@ class SubjectController extends Controller
             if ($subjects->isEmpty()) {
                 return ApiResponse::clientError('No subjects found for this course', null, 404);
             }
-            return ApiResponse::success('Subjects retrieved successfully', $subjects);
+            
+            // Transform subjects to include price and discount explicitly
+            $subjectsWithPricing = $subjects->map(function ($subject) {
+                return [
+                    'subject_id' => $subject->subject_id,
+                    'subject_name' => $subject->subject_name,
+                    'course_id' => $subject->course_id,
+                    'description' => $subject->description,
+                    'resource_link' => $subject->resource_link,
+                    'image' => $subject->image ? url('storage/' . $subject->image) : null,
+                    'price' => $subject->price,
+                    'discount' => $subject->discount,
+                ];
+            });
+            
+            return ApiResponse::success('Subjects retrieved successfully', $subjectsWithPricing);
         } catch (\Throwable $th) {
             if ($th instanceof \Illuminate\Database\QueryException) {
                 return ApiResponse::serverError('Database error: ' . $th->getMessage(), null, 500);
@@ -99,6 +132,7 @@ class SubjectController extends Controller
             $validated = $request->validate([
                 'subject_name' => 'required|string|max:255',
                 'course_id' => 'required|integer|exists:courses,course_id',
+                'description' => 'nullable|string|max:1000',
                 'resource_link' => 'nullable|string|url',
                 'image' => 'nullable|image|mimes:jpeg,png,jpg,gif|max:2048',
                 'price' => 'nullable|numeric|min:0',
@@ -135,6 +169,7 @@ class SubjectController extends Controller
             $validated = $request->validate([
                 'subject_name' => 'required|string|max:255',
                 'course_id' => 'required|integer|exists:courses,course_id',
+                'description' => 'nullable|string|max:1000',
                 'resource_link' => 'nullable|string|max:255',
                 'image' => 'nullable|image|mimes:jpeg,png,jpg,gif|max:2048', // Optional image upload
                 'price' => 'nullable|numeric|min:0',
@@ -203,6 +238,7 @@ class SubjectController extends Controller
                     'subject_id' => $subject->subject_id,
                     'subject_name' => $subject->subject_name,
                     'course_id' => $subject->course_id,
+                    'description' => $subject->description,
                     'semester' => $subject->semester,
                     'price' => $subject->price,
                     'discount' => $subject->discount,

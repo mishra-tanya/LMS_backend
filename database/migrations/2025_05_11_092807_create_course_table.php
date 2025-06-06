@@ -16,6 +16,8 @@ return new class extends Migration
             $table->string('course_name');
             $table->string('image')->nullable();
             $table->text('description')->nullable();
+            $table->decimal('price', 8, 2)->nullable();
+            $table->decimal('discount', 8, 2)->nullable();
             $table->unsignedInteger('semester'); 
             $table->timestamps();
         });

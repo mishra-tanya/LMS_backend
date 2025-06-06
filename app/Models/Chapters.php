@@ -14,6 +14,8 @@ class Chapters extends Model
         'chapter_name',
         'subject_id',
         'resource_link',
+        'description',
+        'image',
     ];
     public function subject()
     {

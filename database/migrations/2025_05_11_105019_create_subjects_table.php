@@ -16,6 +16,8 @@ return new class extends Migration
             $table->string('subject_name');
             $table->unsignedBigInteger('course_id');
             $table->foreign('course_id')->references('course_id')->on('courses')->onDelete('cascade');
+            $table->decimal('price', 8, 2)->nullable();
+            $table->decimal('discount', 8, 2)->nullable();
             $table->string('image')->nullable();
             $table->timestamps();
         });

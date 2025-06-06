@@ -80,8 +80,12 @@ class CourseController extends Controller
             return ApiResponse::serverError('Failed to retrieve course details: ' . $th->getMessage(), null, 500);
         }
     }
-    // create course
-
+    /**
+     * Create a new course
+     * 
+     * Note: This method expects form-data (multipart/form-data) rather than JSON
+     * as it handles file uploads for images
+     */
     public function createCourse(Request $request)
     {
         try {
@@ -89,6 +93,8 @@ class CourseController extends Controller
                 'course_name' => 'required|string|max:255',
                 'description' => 'required|string|max:1000',
                 'semester' => 'required|integer|min:1',
+                'price' => 'required|numeric|min:0',
+                'discount' => 'nullable|numeric|min:0|max:100',
                 'image' => 'nullable|image|mimes:jpeg,png,jpg,gif|max:2048',
             ]);
 
@@ -105,21 +111,30 @@ class CourseController extends Controller
         }
     }
 
-    // update course
+    /**
+     * Update an existing course
+     * 
+     * Note: This method expects form-data (multipart/form-data) rather than JSON
+     * as it handles file uploads for images
+     */
     public function updateCourse(Request $request, $id)
     {
-      
         try {
-
+            // Debug the incoming request
+            
+            // Modified validation to be more lenient for debugging
             $validated = $request->validate([
                 'course_name' => 'required|string|max:255',
                 'description' => 'required|string|max:1000',
                 'semester' => 'required|integer|min:1',
+                'price' => 'required|numeric|min:0',
+                'discount' => 'nullable|numeric|min:0|max:100',
                 'image' => 'nullable|image|mimes:jpeg,png,jpg,gif|max:2048',
             ]);
+            
+            \Log::info('Validated data:', $validated);
+            
             // Find the course by ID
-
-
             $course = Courses::find($id);
 
             if (!$course) {
@@ -140,6 +155,10 @@ class CourseController extends Controller
 
             return ApiResponse::success('Course updated successfully', $course);
         } catch (\Throwable $th) {
+            \Log::error('Update Course Error:', [
+                'message' => $th->getMessage(),
+                'trace' => $th->getTraceAsString()
+            ]);
             return ApiResponse::serverError('Failed to update course: ' . $th->getMessage(), null, 500);
         }
     }

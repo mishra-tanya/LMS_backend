@@ -38,8 +38,6 @@ class DatabaseSeeder extends Seeder
         // Seed data for subject_reviews
         SubjectReview::factory()->count(15)->create();
 
-        // Seed data for purchases
-        Purchase::factory()->count(20)->create();
         
         // Re-enable foreign key checks
         DB::statement('SET FOREIGN_KEY_CHECKS=1;');
