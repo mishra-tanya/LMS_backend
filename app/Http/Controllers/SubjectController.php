@@ -13,35 +13,51 @@ use Tymon\JWTAuth\Exceptions\JWTException;
 
 class SubjectController extends Controller
 {
-    //
+    // get subjects
     public function getSubjects()
     {
         try {
-             $user = null;
+            $user = null;
             try {
                 $user = JWTAuth::parseToken()->authenticate();
             } catch (JWTException $e) {
-                $user = null; 
+                $user = null;
             }
 
             $subjects = Subjects::withAvg('approvedReviews as average_rating', 'rating')
-            ->withCount('approvedReviews as total_reviews')
-            ->get();
+                ->withCount('approvedReviews as total_reviews')
+                ->get();
 
             if ($subjects->isEmpty()) {
                 return ApiResponse::clientError('No subjects found', null, 404);
             }
 
             if ($user) {
-                $purchases = PhonePeTransactions::where('user_id', $user->id)
+                $subjectPurchases = PhonePeTransactions::where('user_id', $user->id)
                     ->where('status', 'success')
                     ->where('payment_type', 'subject')
                     ->get()
                     ->keyBy('course_or_subject_id');
 
-                $subjectsWithPricing = $subjects->map(function ($subject) use ($purchases) {
-                    $isPurchased = isset($purchases[$subject->subject_id]);
-                    $expiryDaysLeft = $isPurchased ? $purchases[$subject->subject_id]->daysLeft() : null;
+                $coursePurchases = PhonePeTransactions::where('user_id', $user->id)
+                    ->where('status', 'success')
+                    ->where('payment_type', 'course')
+                    ->get()
+                    ->keyBy('course_or_subject_id');
+
+                $subjectsWithPricing = $subjects->map(function ($subject) use ($subjectPurchases, $coursePurchases) {
+                    $isPurchasedIndividually = isset($subjectPurchases[$subject->subject_id]);
+                    $isPurchasedViaCourse = isset($coursePurchases[$subject->course_id]);
+
+                    $isPurchased = $isPurchasedIndividually || $isPurchasedViaCourse;
+
+                    if ($isPurchasedIndividually) {
+                        $expiryDaysLeft = $subjectPurchases[$subject->subject_id]->daysLeft();
+                    } elseif ($isPurchasedViaCourse) {
+                        $expiryDaysLeft = $coursePurchases[$subject->course_id]->daysLeft();
+                    } else {
+                        $expiryDaysLeft = null;
+                    }
 
                     return [
                         'subject_id' => $subject->subject_id,
@@ -87,6 +103,7 @@ class SubjectController extends Controller
         }
     }
 
+//by id subject
     public function getSubjectById($id)
     {
         try {
@@ -102,7 +119,7 @@ class SubjectController extends Controller
             } catch (JWTException $e) {
                 $user = null;
             }
-
+            
             $chapters = Chapters::where('subject_id', $id)->get();
 
             $reviewStats = SubjectReview::where('subject_id', $id)
@@ -122,17 +139,7 @@ class SubjectController extends Controller
             $expiryDaysLeft = null;
 
             if ($user) {
-                $purchase = PhonePeTransactions::where('user_id', $user->id)
-                    ->where('payment_type', 'subject')
-                    ->where('course_or_subject_id', $id)
-                    ->where('status', 'success')
-                    ->latest('purchased_at')
-                    ->first();
-
-                if ($purchase && method_exists($purchase, 'daysLeft')) {
-                    $isPurchased = true;
-                    $expiryDaysLeft = $purchase->daysLeft();
-                }
+                [$isPurchased, $expiryDaysLeft] = PhonePeTransactions::hasUserPurchasedSubjectOrCourse($user->id, $id);
             }
 
             $subjectDetails = [

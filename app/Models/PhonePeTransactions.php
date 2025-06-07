@@ -67,5 +67,35 @@ class PhonePeTransactions extends Model
         return $daysLeft;
     }
 
+    public static function hasUserPurchasedSubjectOrCourse($userId, $subjectId)
+    {
+        $subject = Subjects::find($subjectId);
+        if (!$subject) return [false, null];
+
+        $subjectPurchase = self::where('user_id', $userId)
+            ->where('payment_type', 'subject')
+            ->where('course_or_subject_id', $subjectId)
+            ->where('status', 'success')
+            ->latest('purchased_at')
+            ->first();
+
+        if ($subjectPurchase) {
+            return [true, $subjectPurchase->daysLeft()];
+        }
+
+        $coursePurchase = self::where('user_id', $userId)
+            ->where('payment_type', 'course')
+            ->where('course_or_subject_id', $subject->course_id)
+            ->where('status', 'success')
+            ->latest('purchased_at')
+            ->first();
+
+        if ($coursePurchase) {
+            return [true, $coursePurchase->daysLeft()];
+        }
+
+        return [false, null];
+    }
+
 
 }

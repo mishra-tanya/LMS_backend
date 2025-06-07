@@ -119,6 +119,7 @@ class CourseController extends Controller
                 'course_name' => $course->course_name,
                 'course_description' => $course->description,
                 'price'=> $course->price,
+                'discount'=> $course->discount,
                 'semester' => $course->semester,
                 'image' => $course->image ? url('storage/' . $course->image) : null,
                 'total_subjects' => $subjects->count(),

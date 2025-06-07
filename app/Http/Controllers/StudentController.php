@@ -123,17 +123,9 @@ class StudentController extends Controller
             }
 
             $purchases = PhonePeTransactions::where('user_id', $user->id)
-                ->where('status','success')
+                ->where('status', 'success')
                 ->orderByDesc('created_at')
                 ->get();
-
-            $hasValidPurchase = $purchases->contains(function ($purchase) {
-                return $purchase->isValid();
-            });
-
-            if (!$hasValidPurchase) {
-                return response()->json(['error' => 'Your access to this course has expired'], 403);
-            }
 
             if ($purchases->isEmpty()) {
                 return ApiResponse::clientError('No purchased courses found', null, 404);
@@ -175,34 +167,6 @@ class StudentController extends Controller
         }
     }
 
-    
-    // Get student's payment history
-    public function getPaymentHistory()
-    {
-        try {
-            $user = Auth::user();
-            
-            if (!$user) {
-                return ApiResponse::clientError('User not authenticated', null, 401);
-            }
-            
-            $payments = Payment::where('user_id', $user->id)
-                ->orderBy('created_at', 'desc')
-                ->get();
-            
-            if ($payments->isEmpty()) {
-                return ApiResponse::clientError('No payment history found', null, 404);
-            }
-            
-            return ApiResponse::success('Payment history retrieved successfully', $payments);
-        } catch (\Throwable $th) {
-            if ($th instanceof QueryException) {
-                return ApiResponse::serverError('Database error: ' . $th->getMessage(), null, 500);
-            } else {
-                return ApiResponse::serverError('Failed to retrieve payment history: ' . $th->getMessage(), null, 500);
-            }
-        }
-    }
     
     // Get student's reviews
     public function getMyReviews()
