@@ -8,6 +8,8 @@ use App\Models\Courses;
 use App\Models\Chapters;
 use App\Models\SubjectReview;
 use App\Models\PhonePeTransactions;
+use Tymon\JWTAuth\Facades\JWTAuth;
+use Tymon\JWTAuth\Exceptions\JWTException;
 
 class SubjectController extends Controller
 {
@@ -15,40 +17,76 @@ class SubjectController extends Controller
     public function getSubjects()
     {
         try {
-            // $subjects = Subjects::all();
+             $user = null;
+            try {
+                $user = JWTAuth::parseToken()->authenticate();
+            } catch (JWTException $e) {
+                $user = null; 
+            }
+
             $subjects = Subjects::withAvg('approvedReviews as average_rating', 'rating')
-                ->withCount('approvedReviews as total_reviews')
-                ->get();
+            ->withCount('approvedReviews as total_reviews')
+            ->get();
 
             if ($subjects->isEmpty()) {
                 return ApiResponse::clientError('No subjects found', null, 404);
             }
-            
-            // Transform subjects to include price and discount explicitly
-            $subjectsWithPricing = $subjects->map(function ($subject) {
-                return [
-                    'subject_id' => $subject->subject_id,
-                    'subject_name' => $subject->subject_name,
-                    'course_id' => $subject->course_id,
-                    'description' => $subject->description,
-                    'resource_link' => $subject->resource_link,
-                    'image' => $subject->image ? url('storage/' . $subject->image) : null,
-                    'price' => $subject->price,
-                    'discount' => $subject->discount,
-                    'average_rating' => $subject->average_rating,
-                    'total_reviews' => $subject->total_reviews,
-                ];
-            });
-            
+
+            if ($user) {
+                $purchases = PhonePeTransactions::where('user_id', $user->id)
+                    ->where('status', 'success')
+                    ->where('payment_type', 'subject')
+                    ->get()
+                    ->keyBy('course_or_subject_id');
+
+                $subjectsWithPricing = $subjects->map(function ($subject) use ($purchases) {
+                    $isPurchased = isset($purchases[$subject->subject_id]);
+                    $expiryDaysLeft = $isPurchased ? $purchases[$subject->subject_id]->daysLeft() : null;
+
+                    return [
+                        'subject_id' => $subject->subject_id,
+                        'subject_name' => $subject->subject_name,
+                        'course_id' => $subject->course_id,
+                        'description' => $subject->description,
+                        'resource_link' => $subject->resource_link,
+                        'image' => $subject->image ? url('storage/' . $subject->image) : null,
+                        'price' => $subject->price,
+                        'discount' => $subject->discount,
+                        'average_rating' => $subject->average_rating,
+                        'total_reviews' => $subject->total_reviews,
+                        'is_purchased' => $isPurchased,
+                        'expiry_days_left' => $expiryDaysLeft,
+                    ];
+                });
+            } else {
+                $subjectsWithPricing = $subjects->map(function ($subject) {
+                    return [
+                        'subject_id' => $subject->subject_id,
+                        'subject_name' => $subject->subject_name,
+                        'course_id' => $subject->course_id,
+                        'description' => $subject->description,
+                        'resource_link' => $subject->resource_link,
+                        'image' => $subject->image ? url('storage/' . $subject->image) : null,
+                        'price' => $subject->price,
+                        'discount' => $subject->discount,
+                        'average_rating' => $subject->average_rating,
+                        'total_reviews' => $subject->total_reviews,
+                        'is_purchased' => false,
+                        'expiry_days_left' => null,
+                    ];
+                });
+            }
+
             return ApiResponse::success('Subjects retrieved successfully', $subjectsWithPricing);
+
         } catch (\Throwable $th) {
             if ($th instanceof \Illuminate\Database\QueryException) {
                 return ApiResponse::serverError('Database error: ' . $th->getMessage(), null, 500);
             }
             return ApiResponse::serverError('Failed to retrieve subjects: ' . $th->getMessage(), null, 500);
         }
-
     }
+
     public function getSubjectById($id)
     {
         try {
@@ -58,7 +96,13 @@ class SubjectController extends Controller
                 return ApiResponse::clientError('Subject not found', null, 404);
             }
 
-            // Fetch all chapters associated with the subject
+            $user = null;
+            try {
+                $user = JWTAuth::parseToken()->authenticate();
+            } catch (JWTException $e) {
+                $user = null;
+            }
+
             $chapters = Chapters::where('subject_id', $id)->get();
 
             $reviewStats = SubjectReview::where('subject_id', $id)
@@ -68,13 +112,29 @@ class SubjectController extends Controller
 
             $overallRating = $reviewStats->overall_rating;
             $totalReview = $reviewStats->total_review;
-                        
-            $totalUsers = PhonePeTransactions::where('payment_type', 'subject')
-            ->where('course_or_subject_id', $id)
-            ->where('status','success')
-            ->count();
 
-            // Prepare detailed subject information
+            $totalUsers = PhonePeTransactions::where('payment_type', 'subject')
+                ->where('course_or_subject_id', $id)
+                ->where('status', 'success')
+                ->count();
+
+            $isPurchased = false;
+            $expiryDaysLeft = null;
+
+            if ($user) {
+                $purchase = PhonePeTransactions::where('user_id', $user->id)
+                    ->where('payment_type', 'subject')
+                    ->where('course_or_subject_id', $id)
+                    ->where('status', 'success')
+                    ->latest('purchased_at')
+                    ->first();
+
+                if ($purchase && method_exists($purchase, 'daysLeft')) {
+                    $isPurchased = true;
+                    $expiryDaysLeft = $purchase->daysLeft();
+                }
+            }
+
             $subjectDetails = [
                 'subject_name' => $subject->subject_name,
                 'course_id' => $subject->course_id,
@@ -84,9 +144,11 @@ class SubjectController extends Controller
                 'price' => $subject->price,
                 'discount' => $subject->discount,
                 'chapters' => $chapters,
-                'totalUsers' => $totalUsers,
+                'total_users' => $totalUsers,
                 'overall_rating' => $overallRating,
-                'total_review_count' => $totalReview
+                'total_review_count' => $totalReview,
+                'is_purchased' => $isPurchased,
+                'expiry_days_left' => $expiryDaysLeft,
             ];
 
             return ApiResponse::success('Subject details retrieved successfully', $subjectDetails);

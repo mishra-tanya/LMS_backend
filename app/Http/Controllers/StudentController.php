@@ -127,13 +127,22 @@ class StudentController extends Controller
                 ->orderByDesc('created_at')
                 ->get();
 
+            $hasValidPurchase = $purchases->contains(function ($purchase) {
+                return $purchase->isValid();
+            });
+
+            if (!$hasValidPurchase) {
+                return response()->json(['error' => 'Your access to this course has expired'], 403);
+            }
+
             if ($purchases->isEmpty()) {
                 return ApiResponse::clientError('No purchased courses found', null, 404);
             }
 
             $purchases = $purchases->map(function ($item) {
                 $item->course_or_subject_details = null;
-
+                $item->days_left = $item->daysLeft();
+                $item->is_expired = !$item->isValid();
                 if ($item->payment_type === 'course') {
                     $details = Courses::withAvg('approvedReviews as average_rating', 'rating')
                         ->withCount('approvedReviews as total_reviews')

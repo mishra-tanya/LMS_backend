@@ -22,18 +22,22 @@ class CourseSeeder extends Seeder
                 'semester' => 6,
                 'image' => 'https://amplifilearn.com/api/storage/app/public/course_images/ba_6th.jpg',
                 'price' => 1000,
+                'discount'=> 70
             ],
             [
                 'course_name' => 'B.A',
                 'semester' => 1,
                 'image' => 'https://amplifilearn.com/api/storage/app/public/course_images/ba_1st.jpg',
                 'price' => 100,
+                'discount'=> 70
+
             ],
             [
                 'course_name' => 'B.A',
                 'semester' => 2,
                 'image' => 'https://amplifilearn.com/api/storage/app/public/course_images/ba_2nd.jpg',
                 'price' => 500,
+                'discount'=> 70
             ],
             [
                 'course_name' => 'B.A',

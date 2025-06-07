@@ -8,11 +8,15 @@ use App\Helpers\ApiResponse;
 use App\Models\PhonePeTransactions;
 use App\Models\Courses;
 use App\Models\Subjects;
+use Tymon\JWTAuth\Facades\JWTAuth;
+use Tymon\JWTAuth\Exceptions\JWTException;
 
 class FeaturedCourseOrSubjectController extends Controller
 {
     
-    public function getFeaturedCourseOrSubject(){
+
+    public function getFeaturedCourseOrSubject()
+    {
         try {
             $topItems = PhonePeTransactions::select('payment_type', 'course_or_subject_id')
                 ->whereIn('payment_type', ['course', 'subject'])
@@ -23,25 +27,50 @@ class FeaturedCourseOrSubjectController extends Controller
                 ->limit(5)
                 ->get();
 
-            $results = $topItems->map(function ($item) {
+            // Try to authenticate user (but do not fail if token is missing)
+            $user = null;
+            try {
+                $user = JWTAuth::parseToken()->authenticate();
+            } catch (JWTException $e) {
+                $user = null;
+            }
+
+            $results = $topItems->map(function ($item) use ($user) {
                 if ($item->payment_type === 'course') {
-                    // $details = Courses::where('course_id', $item->course_or_subject_id)->first();
                     $details = Courses::withAvg('approvedReviews as average_rating', 'rating')
-                    ->where('course_id', $item->course_or_subject_id)
-                    ->withCount('approvedReviews as total_reviews')
-                    ->first();
-                } else {
-                    // $details = Subjects::where('subject_id', $item->course_or_subject_id)->first();
-                      $details = Subjects::withAvg('approvedReviews as average_rating', 'rating')
-                        ->where('subject_id', $item->course_or_subject_id)
                         ->withCount('approvedReviews as total_reviews')
+                        ->where('course_id', $item->course_or_subject_id)
                         ->first();
+                } else {
+                    $details = Subjects::withAvg('approvedReviews as average_rating', 'rating')
+                        ->withCount('approvedReviews as total_reviews')
+                        ->where('subject_id', $item->course_or_subject_id)
+                        ->first();
+                }
+
+                $isPurchased = false;
+                $expiryDaysLeft = null;
+
+                if ($user && $details) {
+                    $purchase = PhonePeTransactions::where('user_id', $user->id)
+                        ->where('payment_type', $item->payment_type)
+                        ->where('course_or_subject_id', $item->course_or_subject_id)
+                        ->where('status', 'success')
+                        ->latest('purchased_at')
+                        ->first();
+
+                    if ($purchase && method_exists($purchase, 'daysLeft')) {
+                        $isPurchased = true;
+                        $expiryDaysLeft = $purchase->daysLeft();
+                    }
                 }
 
                 return [
                     'type' => $item->payment_type,
                     'total_users' => $item->total_users,
                     'details' => $details,
+                    'is_purchased' => $isPurchased,
+                    'expiry_days_left' => $expiryDaysLeft,
                 ];
             });
 
@@ -51,5 +80,6 @@ class FeaturedCourseOrSubjectController extends Controller
             return ApiResponse::serverError('Failed to retrieve top featured items: ' . $th->getMessage());
         }
     }
+
 
 }

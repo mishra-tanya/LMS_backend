@@ -8,6 +8,8 @@ use App\Models\Subjects;
 use App\Models\CourseReview;
 use App\Models\PhonePeTransactions;
 use Illuminate\Http\Request;
+use Tymon\JWTAuth\Facades\JWTAuth;
+use Tymon\JWTAuth\Exceptions\JWTException;
 
 class CourseController extends Controller
 {
@@ -15,7 +17,13 @@ class CourseController extends Controller
     public function getCourses()
     {
         try {
-            // $courses = Courses::all();
+             $user = null;
+            try {
+                $user = JWTAuth::parseToken()->authenticate();
+            } catch (JWTException $e) {
+                $user = null;
+            }
+
             $courses = Courses::withAvg('approvedReviews as average_rating', 'rating')
                 ->withCount('approvedReviews as total_reviews')
                 ->get();
@@ -23,7 +31,30 @@ class CourseController extends Controller
             if ($courses->isEmpty()) {
                 return ApiResponse::clientError('No courses found', null, 404);
             }
+
+            if ($user) {
+                $purchases = PhonePeTransactions::where('user_id', $user->id)
+                    ->where('status', 'success')
+                    ->where('payment_type', 'course')
+                    ->get()
+                    ->keyBy('course_or_subject_id');
+
+                $courses->transform(function ($course) use ($purchases) {
+                    if (isset($purchases[$course->course_id])) {
+                        $purchase = $purchases[$course->course_id];
+                        $course->is_purchased = true;
+                        $course->expiry_days_left = $purchase->daysLeft();
+                    } else {
+                        $course->is_purchased = false;
+                        $course->expiry_days_left = null;
+                    }
+
+                    return $course;
+                });
+            }
+
             return ApiResponse::success('Courses retrieved successfully', $courses);
+
         } catch (\Throwable $th) {
             if ($th instanceof \Illuminate\Database\QueryException) {
                 return ApiResponse::serverError('Database error: ' . $th->getMessage(), null, 500);
@@ -31,6 +62,7 @@ class CourseController extends Controller
             return ApiResponse::serverError('Failed to retrieve courses: ' . $th->getMessage(), null, 500);
         }
     }
+
 
 
     // get course by id
@@ -41,6 +73,12 @@ class CourseController extends Controller
 
             if (!$course) {
                 return ApiResponse::clientError('Course not found', null, 404);
+            }
+            $user = null;
+            try {
+                $user = JWTAuth::parseToken()->authenticate();
+            } catch (JWTException $e) {
+                $user = null; 
             }
 
             // Fetch total subjects for the course
@@ -60,6 +98,21 @@ class CourseController extends Controller
 
             $overallRating = $reviewStats->overall_rating;
             $totalReview = $reviewStats->total_review;
+            $isPurchased = false;
+            $expiryDaysLeft = null;
+            if ($user) {
+                $purchase = PhonePeTransactions::where('user_id', $user->id)
+                    ->where('payment_type', 'course')
+                    ->where('course_or_subject_id', $id)
+                    ->where('status', 'success')
+                    ->latest('purchased_at')
+                    ->first();
+
+                if ($purchase) {
+                    $isPurchased = true;
+                    $expiryDaysLeft = $purchase->daysLeft();
+                }
+            }
 
             // Prepare detailed course information
             $courseDetails = [
@@ -72,7 +125,9 @@ class CourseController extends Controller
                 'subjects' => $subjects,
                 'total_users' => $totalUsers,
                 'overall_rating' => $overallRating,
-                'total_review_count' => $totalReview
+                'total_review_count' => $totalReview,
+                'is_purchased' => $isPurchased,
+                'expiry_days_left' => $expiryDaysLeft,
             ];
 
             return ApiResponse::success('Course details retrieved successfully', $courseDetails);
