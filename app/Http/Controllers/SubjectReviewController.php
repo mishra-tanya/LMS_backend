@@ -45,7 +45,7 @@ class SubjectReviewController extends Controller
     public function getSubjectReviews()
     {
         try {
-            $reviews = SubjectReview::all();
+            $reviews = SubjectReview::with('user:id,name')->get();
 
             if ($reviews->isEmpty()) {
                 return ApiResponse::clientError('No subject reviews found', null, 404);
@@ -67,7 +67,7 @@ class SubjectReviewController extends Controller
     public function getReviewsBySubjectId($subject_id)
     {
         try {
-            $reviews = SubjectReview::where('subject_id', $subject_id)->get();
+            $reviews = SubjectReview::with('user:id,name')->where('subject_id', $subject_id)->get();
 
             if ($reviews->isEmpty()) {
                 return ApiResponse::clientError('No reviews found for this subject', null, 404);
@@ -139,7 +139,7 @@ class SubjectReviewController extends Controller
     public function getApprovedSubjectReviews()
     {
         try {
-            $reviews = SubjectReview::where('is_approved', true)->get();
+            $reviews = SubjectReview::with('user:id,name')->where('is_approved', true)->get();
 
             if ($reviews->isEmpty()) {
                 return ApiResponse::clientError('No approved subject reviews found', null, 404);
