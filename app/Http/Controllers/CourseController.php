@@ -121,7 +121,7 @@ class CourseController extends Controller
                 'price'=> $course->price,
                 'discount'=> $course->discount,
                 'semester' => $course->semester,
-                'image' => $course->image ? url('storage/' . $course->image) : null,
+                'image' => $course->image,
                 'total_subjects' => $subjects->count(),
                 'subjects' => $subjects,
                 'total_users' => $totalUsers,

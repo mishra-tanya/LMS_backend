@@ -82,7 +82,7 @@ class SubjectController extends Controller
                         'course_id' => $subject->course_id,
                         'description' => $subject->description,
                         'resource_link' => $subject->resource_link,
-                        'image' => $subject->image ? url('storage/' . $subject->image) : null,
+                        'image' => $subject->image,
                         'price' => $subject->price,
                         'discount' => $subject->discount,
                         'average_rating' => $subject->average_rating,
