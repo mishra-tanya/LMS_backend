@@ -108,7 +108,7 @@ Route::middleware('auth:api')->prefix('student')->group(function () {
     Route::put('/profile', [StudentController::class, 'updateProfile']);
     Route::post('/change-password', [StudentController::class, 'changePassword']);
     Route::get('/purchased-courses', [StudentController::class, 'getPurchasedCourses']);
-    Route::get('/payment-history', [StudentController::class, 'getPaymentHistory']);
+    Route::get('/payment-history', [PurchaseController::class, 'getUserPurchaseHistory']);
     Route::get('/my-reviews', [StudentController::class, 'getMyReviews']);    
 });
 

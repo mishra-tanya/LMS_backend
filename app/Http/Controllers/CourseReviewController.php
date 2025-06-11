@@ -45,7 +45,7 @@ class CourseReviewController extends Controller
     public function getCourseReviews()
     {
         try {
-            $reviews = CourseReview::all();
+            $reviews = CourseReview::with('user:id,name')->get();
 
             if ($reviews->isEmpty()) {
                 return ApiResponse::clientError('No course reviews found', null, 404);
@@ -67,7 +67,7 @@ class CourseReviewController extends Controller
     public function getReviewsByCourseId($course_id)
     {
         try {
-            $reviews = CourseReview::where('course_id', $course_id)->get();
+            $reviews = CourseReview::with('user:id,name')->where('course_id', $course_id)->get();
 
             if ($reviews->isEmpty()) {
                 return ApiResponse::clientError('No reviews found for this course', null, 404);
@@ -139,7 +139,7 @@ class CourseReviewController extends Controller
     public function getApprovedCourseReviews()
     {
         try {
-            $reviews = CourseReview::where('is_approved', true)->get();
+            $reviews = CourseReview::with('user:id,name')->where('is_approved', true)->get();
 
             if ($reviews->isEmpty()) {
                 return ApiResponse::clientError('No approved course reviews found', null, 404);
