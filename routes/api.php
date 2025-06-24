@@ -34,7 +34,7 @@ Route::get('/password/reset/{token}', function ($token) {
 })->name('password.reset');
 
 // user protected rotues
-Route::middleware('auth:api')->group(function () {
+Route::middleware(['auth:api', 'check.jwt'])->group(function () {
     Route::get('/me', [AuthController::class, 'me']);
     Route::post('/logout', [AuthController::class, 'logout']);
 
@@ -103,7 +103,7 @@ Route::put('/subjectreviews/{review_id}/approve', [SubjectReviewController::clas
 
 
 // student Routes 
-Route::middleware('auth:api')->prefix('student')->group(function () {
+Route::middleware(['auth:api','check.jwt'])->prefix('student')->group(function () {
     Route::get('/profile', [StudentController::class, 'getProfile']);
     Route::put('/profile', [StudentController::class, 'updateProfile']);
     Route::post('/change-password', [StudentController::class, 'changePassword']);

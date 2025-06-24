@@ -30,6 +30,9 @@ class AuthService
         }
         
         $token = JWTAuth::fromUser($user);
+        $user->current_jwt_token = $token;
+        $user->save();
+
         return [
             'token' => $token,
             'user_id' => $user->id,
