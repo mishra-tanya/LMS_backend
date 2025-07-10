@@ -18,7 +18,7 @@ use App\Models\PhonePeTransactions;
 class PhonePeController extends Controller
 {
     public function initiate(Request $request){
-         try {
+        try {
         $user = Auth::user();
 
         if (!$user) {
@@ -34,13 +34,16 @@ class PhonePeController extends Controller
 
         $transactionId = (string) Str::uuid();
         $userId = $user->id;
-        $paymentType = $request->payment_type ?? 'phonepe';
+        $paymentType = $request->payment_type;
         $course_or_subject_id = $request->course_or_subject_id ;
         $amount = $request->amount;
-
-        if (!$amount || !is_numeric($amount) || $amount <= 0) {
-            return ApiResponse::clientError('Invalid or missing amount.', null, 422);
+        $validated = $this->validateInitiationData($request);
+        if (isset($validated['error'])) {
+            return $validated['error']; 
         }
+        $paymentType = $validated['payment_type'];
+        $course_or_subject_id = $validated['course_or_subject_id'];
+        $amount = $validated['amount'];
 
         PhonePeTransactions::create([
             'user_id' => $userId,
@@ -51,113 +54,138 @@ class PhonePeController extends Controller
             'status' => 'initiated',
         ]);
 
-        $data = [
-            'merchantId' => env('PHONEPE_MERCHANT_ID'),
-            'merchantTransactionId' => $transactionId,
-            'merchantUserId' =>  'user_' . $userId,
+        $authResponse = Http::asForm()->post(env('PHONEPE_AUTH_URL'), [
+            'client_id' => env('PHONEPE_CLIENT_ID'),
+            'client_version' =>  env('PHONEPE_CLIENT_VERSION'),
+            'client_secret' => env('PHONEPE_CLIENT_SECRET'),
+            'grant_type' => 'client_credentials',
+        ]);
+
+        if (!$authResponse->ok()) {
+            return ApiResponse::serverError('Failed to authenticate with PhonePe.', $authResponse->json());
+        }
+
+        $accessToken = $authResponse['access_token'];
+        $payUrl = env('PHONEPE_BASE_URL') . '/checkout/v2/pay';
+        $paymentPayload = [
+            'merchantOrderId' => $transactionId,
             'amount' => $amount * 100, 
-            'redirectUrl' => route('phonepe.callback'),
-            'redirectMode' => 'POST',
-            'callbackUrl' => route('phonepe.callback'),
-            'paymentInstrument' => [
-                'type' => 'PAY_PAGE',
+            'expireAfter' => 1200,
+            'metaInfo' => [
+                'udf1' => 'user_id_' . $userId,
+                'udf2' => 'course_' . $course_or_subject_id,
+            ],
+            'paymentFlow' => [
+                'type' => 'PG_CHECKOUT',
+                'message' => 'Payment for your course',
+                'merchantUrls' => [
+                    'redirectUrl' => route('phonepe.callback') . '?transactionId=' . $transactionId,
+                ],
             ],
         ];
-        $encodedPayload = base64_encode(json_encode($data));
 
-        $saltKey = env('PHONEPE_SALT_KEY');
-        $saltIndex = 1;
-
-        $path = '/pg/v1/pay';
-        $url =env('PHONEPE_URL'); 
-
-        $stringToHash = $encodedPayload . $path . $saltKey;
-        $sha256Hash = hash('sha256', $stringToHash);
-        $finalXHeader = $sha256Hash . "###" . $saltIndex;
-        
-        $response = Http::withHeaders([
+        $paymentResponse = Http::withHeaders([
+            'Authorization' => 'O-Bearer ' . $accessToken,
             'Content-Type' => 'application/json',
-            'X-VERIFY' => $finalXHeader
-        ])->post($url, ['request' => $encodedPayload]);
-         
-        $rData = $response->json();
+        ])->post($payUrl, $paymentPayload);
 
-        if (isset($rData['data']['instrumentResponse']['redirectInfo']['url'])) {
+        $rData = $authResponse->json();
+
+        $responseData = $paymentResponse->json();
+
+        if ($paymentResponse->ok() && isset($responseData['redirectUrl'])) {
             return ApiResponse::success('PhonePe payment URL generated', [
-                'redirect_url' => $rData['data']['instrumentResponse']['redirectInfo']['url']
+                'redirect_url' => $responseData['redirectUrl']
             ]);
         } else {
-            Log::error('PhonePe payment initiation failed', $rData);
-            return ApiResponse::serverError('Failed to initiate PhonePe payment', $rData, 500);
+            Log::error('PhonePe payment initiation failed', $responseData);
+            return ApiResponse::serverError('Failed to initiate PhonePe payment', $responseData, 500);
         }
     }
 
+    public function callback(Request $request)
+    {
+        $transactionId = $request->query('transactionId'); 
 
-
-    public function callback(Request $request){
-        $payload = $request->all();
         $frontendUrl = env('APP_BASE_PATH');
 
-// dd($payload);
-        try {
-            $status = $payload['code'] ?? null;
-            $transactionId = $payload['transactionId'] ?? null;
-            $merchantTransactionId = $payload['providerReferenceId'] ?? null;
-            if (!$merchantTransactionId) {
-                return ApiResponse::clientError('Missing transaction reference.', $payload, 400);
-            }
-
-            $phonepePayment = PhonePeTransactions::where('transaction_id', $transactionId)->first();
-
-            if (!$phonepePayment) {
-                return ApiResponse::clientError('Transaction not found.', $payload, 404);
-            }
-
-            if ($status === 'PAYMENT_SUCCESS') {
-                $phonepePayment->status = 'success';
-                $phonepePayment->merchant_transaction_id =  $merchantTransactionId;
-                
-                $phonepePayment->save();
-                return redirect()->away("{$frontendUrl}/payment-status?status=success&order_id={$merchantTransactionId}&payment_id={$transactionId}");
-
-                // return ApiResponse::success('Payment successful.', [
-                //     'transaction_id' => $transactionId,
-                //     'merchant_transaction_id' => $merchantTransactionId,
-                // ]);
-            }
-
-            if ($status === 'PAYMENT_ERROR') {
-                $phonepePayment->status = 'failed';
-                $phonepePayment->save();
-
-                return redirect()->away("{$frontendUrl}/payment-status?status=failed&transaction_id={$transactionId}}");
-
-                // return ApiResponse::clientError('Payment failed.', [
-                //     'transaction_id' => $transactionId,
-                //     'merchant_transaction_id' => $merchantTransactionId,
-                // ]);
-            }
-
-            if ($status === 'PAYMENT_PENDING') {
-                $phonepePayment->status = 'pending';
-                $phonepePayment->save();
-
-                return redirect()->away("{$frontendUrl}/payment-status?status=pending&transaction_id={$transactionId}}");
-
-                // return ApiResponse::clientError('Payment Pending.', [
-                //     'transaction_id' => $transactionId,
-                //     'merchant_transaction_id' => $merchantTransactionId,
-                // ]);
-            }
-
-            return ApiResponse::clientError('Unknown payment status.', $payload, 400);
-
-        } catch (\Exception $e) {
-            return ApiResponse::serverError('Internal error processing payment callback.', [
-                'error' => $e->getMessage()
-            ]);
+        if (!$transactionId) {
+            return redirect()->away("{$frontendUrl}/payment-status?status=error&reason=missing_transaction_id");
         }
+
+        $authResponse = Http::asForm()->post(env('PHONEPE_AUTH_URL'), [
+            'client_id' => env('PHONEPE_CLIENT_ID'),
+            'client_version' =>  env('PHONEPE_CLIENT_VERSION'),
+            'client_secret' => env('PHONEPE_CLIENT_SECRET'),
+            'grant_type' => 'client_credentials',
+        ]);
+
+        if (!$authResponse->ok()) {
+            return redirect()->away("{$frontendUrl}/payment-status?status=error&reason=auth_failed");
+        }
+
+        $accessToken = $authResponse['access_token'];
+
+        $statusResponse = Http::withHeaders([
+            'Authorization' => 'O-Bearer ' . $accessToken,
+            'Content-Type' => 'application/json',
+        ])->get(env('PHONEPE_BASE_URL') . "/checkout/v2/order/{$transactionId}/status");
+
+        if (!$statusResponse->ok()) {
+            return redirect()->away("{$frontendUrl}/payment-status?status=error&reason=status_check_failed");
+        }
+
+        $statusData = $statusResponse->json();
+        $status = $statusData['state'] ?? 'UNKNOWN';
+        $merchantTransactionId = $statusData['paymentDetails'][0]['transactionId'] ?? null;
+
+        $phonepePayment = PhonePeTransactions::where('transaction_id', $transactionId)->first();
+        if ($phonepePayment) {
+            $phonepePayment->merchant_transaction_id = $merchantTransactionId;
+
+            if ($status === 'COMPLETED') {
+                $phonepePayment->status = 'success';
+            } elseif ($status === 'FAILED') {
+                $phonepePayment->status = 'failed';
+            } elseif ($status === 'PENDING') {
+                $phonepePayment->status = 'pending';
+            } else {
+                $phonepePayment->status = 'unknown';
+            }
+
+            $phonepePayment->save();
+        }
+
+        return redirect()->away("{$frontendUrl}/payment-status?status={$phonepePayment->status}&order_id={$merchantTransactionId}&payment_id={$transactionId}");
     }
+
+    private function validateInitiationData(Request $request)
+    {
+        $validated = $request->validate([
+            'payment_type' => 'required|string',
+            'course_or_subject_id' => 'required|integer',
+            'amount' => 'required|numeric|min:1',
+        ]);
+        if($validated['payment_type']!='course' && $validated['payment_type']!='subject' ){
+            return [
+                'error' => ApiResponse::clientError("Is not valid.", null, 422)
+            ];
+        }
+
+        $table = $validated['payment_type'] === 'course' ? 'courses' : 'subjects';
+        $column = $validated['payment_type'] === 'course' ? 'course_id' : 'subject_id';
+
+        $exists = \DB::table($table)->where($column, $validated['course_or_subject_id'])->exists();
+
+        if (!$exists) {
+            return [
+                'error' => ApiResponse::clientError("The specified {$validated['payment_type']} ({$validated['course_or_subject_id']}) does not exist.", null, 422)
+            ];
+        }
+
+        return $validated;
+    }
+
 
 
 }

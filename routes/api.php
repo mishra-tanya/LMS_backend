@@ -38,14 +38,14 @@ Route::middleware(['auth:api', 'check.jwt'])->group(function () {
     Route::get('/me', [AuthController::class, 'me']);
     Route::post('/logout', [AuthController::class, 'logout']);
 
-    Route::post('/phonepe-initiate', [PhonePeController::class, 'initiate']);
+    Route::post('/phonepe-initiate', [PhonePeController::class, 'initiate'])->middleware('throttle:5,1');;
 
     Route::get('/user-purchase-history', [PurchaseController::class, 'getUserPurchaseHistory']);
 
 });
 
 // phonepe payments
-Route::post('/phonepe-callback', [PhonePeController::class, 'callback'])->name('phonepe.callback');
+Route::get('phonepe-callback', [PhonePeController::class, 'callback'])->name('phonepe.callback');
 
 // Purchase history
 Route::get('/purchase-history', [PurchaseController::class, 'getAllPurchaseHistory']);
