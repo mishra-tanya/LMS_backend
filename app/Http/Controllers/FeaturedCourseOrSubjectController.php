@@ -18,8 +18,17 @@ class FeaturedCourseOrSubjectController extends Controller
     public function getFeaturedCourseOrSubject()
     {
         try {
-            $topItems = PhonePeTransactions::select('payment_type', 'course_or_subject_id')
-                ->whereIn('payment_type', ['course', 'subject'])
+            $topCourses = PhonePeTransactions::select('payment_type', 'course_or_subject_id')
+                ->where('payment_type', 'course')
+                ->where('status', 'success')
+                ->selectRaw('COUNT(*) as total_users')
+                ->groupBy('payment_type', 'course_or_subject_id')
+                ->orderByDesc('total_users')
+                ->limit(10)
+                ->get();
+
+            $topSubjects = PhonePeTransactions::select('payment_type', 'course_or_subject_id')
+                ->where('payment_type', 'subject')
                 ->where('status', 'success')
                 ->selectRaw('COUNT(*) as total_users')
                 ->groupBy('payment_type', 'course_or_subject_id')
@@ -34,6 +43,7 @@ class FeaturedCourseOrSubjectController extends Controller
             } catch (JWTException $e) {
                 $user = null;
             }
+            $topItems = $topCourses->concat($topSubjects)->values();
 
             $results = $topItems->map(function ($item) use ($user) {
                 if ($item->payment_type === 'course') {

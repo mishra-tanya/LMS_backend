@@ -64,19 +64,22 @@ class AuthController extends Controller
     }
 
     // email verify
-    public function verifyEmail($id, $hash){
-        $user = User::where('id', $id)->firstOrFail();
+    public function verifyEmail($id, $hash)
+    {
+        $user = User::findOrFail($id);
+        $frontendUrl = rtrim(env('APP_BASE_PATH'), '/') . '/email-verified';
 
         if ($user->hasVerifiedEmail()) {
-            return response()->json(['message' => 'Email already verified.'], 200);
+            return redirect()->away("{$frontendUrl}?status=already_verified");
         }
 
         if ($user->markEmailAsVerified()) {
             if ($user instanceof \Illuminate\Contracts\Auth\MustVerifyEmail) {
                 event(new Verified($user));
             }
+            return redirect()->away("{$frontendUrl}?status=success");
         }
 
-        return response()->json(['message' => 'Email verified successfully.'], 200);
+        return redirect()->away("{$frontendUrl}?status=error");
     }
 }
