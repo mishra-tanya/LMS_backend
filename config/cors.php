@@ -7,7 +7,7 @@ return [
 
     'allowed_origins' => [
         'http://localhost:8080',
-        'https://amplifilearn.com/',
+        'https://amplifilearn.com',
     ],
 
     'allowed_origins_patterns' => [],
@@ -18,6 +18,6 @@ return [
 
     'max_age' => 0,
 
-    'supports_credentials' => true,
+    'supports_credentials' => false,
 
 ];
