@@ -8,8 +8,10 @@ use Tymon\JWTAuth\Facades\JWTAuth;
 
 use Illuminate\Support\Facades\Auth;
 use Tymon\JWTAuth\Exceptions\JWTException;
-use App\Models\PhonePeTransactions;
 use App\Helpers\ApiResponse;
+use App\Models\Courses;
+use App\Models\Subjects;
+use App\Models\PhonePeTransactions;
 
 class PurchaseController extends Controller
 {
@@ -98,5 +100,53 @@ class PurchaseController extends Controller
             ]);
         }
     }
+
+        public function initiateFreeCourseSubject(Request $request)
+        {
+            $request->validate([
+                'payment_type' => 'required|string',
+                'id' => 'required|integer',
+            ]);
+
+            $user  = Auth::user();
+
+            $userId = $user->id;
+            $paymentType = $request->payment_type;
+            $id = $request->id; // course_id or subject_id
+
+            // Fetch item (course or subject)
+            if ($paymentType === 'course') {
+                $item = Courses::find($id);
+            } else {
+                $item = Subjects::find($id);
+            }
+
+            if (!$item) {
+                return ApiResponse::clientError("Invalid {$paymentType} ID.");
+            }
+
+            $price = $item->price ?? 0;
+            $discount = $item->discount ?? 0;
+            $discountAmount = ($price * $discount) / 100;
+            $finalAmount = $price - $discountAmount;
+
+            if ($finalAmount > 0) {
+                return ApiResponse::clientError("This {$paymentType} is not free. Please proceed to payment.");
+            }
+            $transactionId = $finalAmount <= 0 ? 'FREE-' . uniqid() : generateRealTransactionId();
+
+
+            // Save to phonepe_transactions
+            PhonePeTransactions::create([
+                'user_id' => $userId,
+                'payment_type' => $paymentType,
+                'course_or_subject_id' => $id,
+                'transaction_id' => $transactionId,
+                'amount' => 0,
+                'status' => 'success',
+            ]);
+
+            return ApiResponse::success("Free {$paymentType} access granted and transaction recorded.");
+        }
 
 }

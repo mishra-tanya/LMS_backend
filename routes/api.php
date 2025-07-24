@@ -15,11 +15,13 @@ use App\Http\Controllers\PurchaseController;
 use App\Http\Controllers\FeaturedCourseOrSubjectController;
 use App\Http\Controllers\StatisticsController;
 
+// public routes 
 
 // Auth routes
 Route::post('/login', [AuthController::class, 'login'])->name('login');
 Route::post('/register', [AuthController::class, 'register']);
 
+// email verification routes
 Route::post('/email/verification-notification', function (Request $request) {
     $request->user()->sendEmailVerificationNotification();
     return response()->json(['message' => 'Verification link sent!']);
@@ -27,11 +29,43 @@ Route::post('/email/verification-notification', function (Request $request) {
 
 Route::get('email/verify/{id}/{hash}', [AuthController::class, 'verifyEmail'])->name('verification.verify');
 
+// password forgot routes
 Route::post('forgot-password', [ForgotPasswordController::class, 'forgotPassword']);
 Route::post('reset-password', [ForgotPasswordController::class, 'resetPassword']);
 Route::get('/password/reset/{token}', function ($token) {
     return response()->json(['token' => $token]);
 })->name('password.reset');
+
+// phonepe payments (callback from phonepe)
+Route::get('phonepe-callback', [PhonePeController::class, 'callback'])->name('phonepe.callback');
+
+// featured courses 
+Route::get('/featuredCourseOrSubject', [FeaturedCourseOrSubjectController::class, 'getFeaturedCourseOrSubject']);
+
+// Course routes
+Route::get('/courses', [CourseController::class, 'getCourses']);
+Route::get('/courses/{id}', [CourseController::class, 'getcourseById']);
+
+// Subject routes
+Route::get('/subjects', [SubjectController::class, 'getSubjects']);
+Route::get('/subjects/{id}', [SubjectController::class, 'getSubjectById']);
+Route::get('/subjects/course/{course_id}', [SubjectController::class, 'getSubjectsByCourseId']);
+
+// Chapter routes
+Route::get('/chapters', [ChapterController::class, 'getChapters']);
+Route::get('/chapters/subject/{subject_id}', [ChapterController::class, 'getChaptersBySubjectId']);
+Route::get('/chapters/course/{course_id}', [ChapterController::class, 'getChaptersByCourseId']); 
+Route::get('/chapters/{id}', [ChapterController::class, 'getChapterById']);
+
+// course Review routes
+Route::get('/coursereviews', [CourseReviewController::class, 'getCourseReviews']);
+Route::get('/coursereviews/course/{course_id}', [CourseReviewController::class, 'getReviewsByCourseId']);
+Route::get('/coursereviews/approved', [CourseReviewController::class, 'getApprovedCourseReviews']);
+
+// subject Review routes
+Route::get('/subjectreviews', [SubjectReviewController::class, 'getSubjectReviews']);
+Route::get('/subjectreviews/subject/{subject_id}', [SubjectReviewController::class, 'getReviewsBySubjectId']);
+Route::get('/subjectreviews/approved', [SubjectReviewController::class, 'getApprovedSubjectReviews']);
 
 // user protected rotues
 Route::middleware(['auth:api', 'check.jwt'])->group(function () {
@@ -41,66 +75,10 @@ Route::middleware(['auth:api', 'check.jwt'])->group(function () {
     Route::post('/phonepe-initiate', [PhonePeController::class, 'initiate'])->middleware('throttle:5,1');;
 
     Route::get('/user-purchase-history', [PurchaseController::class, 'getUserPurchaseHistory']);
-
+    Route::post('/free-course-or-subject', [PurchaseController::class, 'initiateFreeCourseSubject']);
+    Route::post('/coursereviews', [CourseReviewController::class, 'createCourseReview']);
+    Route::post('/subjectreviews', [SubjectReviewController::class, 'createSubjectReview']);
 });
-
-// phonepe payments
-Route::get('phonepe-callback', [PhonePeController::class, 'callback'])->name('phonepe.callback');
-
-// Purchase history
-Route::get('/purchase-history', [PurchaseController::class, 'getAllPurchaseHistory']);
-
-// featured courses 
-Route::get('/featuredCourseOrSubject', [FeaturedCourseOrSubjectController::class, 'getFeaturedCourseOrSubject']);
-
-// statistics
-Route::get('/statistics', [StatisticsController::class, 'getStatistics']);
-
-// Course routes
-Route::get('/courses', [CourseController::class, 'getCourses']);
-Route::get('/courses/{id}', [CourseController::class, 'getcourseById']);
-Route::post('/courses', [CourseController::class, 'createCourse']);
-Route::put('/courses/{id}', [CourseController::class, 'updateCourse']);
-Route::delete('/courses/{id}', [CourseController::class, 'deleteCourse']);
-
-
-// Subject routes
-Route::get('/subjects', [SubjectController::class, 'getSubjects']);
-Route::get('/subjects/{id}', [SubjectController::class, 'getSubjectById']);
-Route::get('/subjects/course/{course_id}', [SubjectController::class, 'getSubjectsByCourseId']);
-Route::post('/subjects', [SubjectController::class, 'createSubject']);
-Route::put('/subjects/{id}', [SubjectController::class, 'updateSubject']);
-Route::delete('/subjects/{id}', [SubjectController::class, 'deleteSubject']);
-
-
-// Chapter routes
-Route::get('/chapters', [ChapterController::class, 'getChapters']);
-Route::get('/chapters/subject/{subject_id}', [ChapterController::class, 'getChaptersBySubjectId']);
-Route::get('/chapters/course/{course_id}', [ChapterController::class, 'getChaptersByCourseId']); 
-Route::get('/chapters/{id}', [ChapterController::class, 'getChapterById']);
-Route::post('/chapters', [ChapterController::class, 'createChapter']);
-Route::put('/chapters/{id}', [ChapterController::class, 'updateChapter']);
-Route::delete('/chapters/{id}', [ChapterController::class, 'deleteChapter']);
-
-
-// course Review routes
-Route::post('/coursereviews', [CourseReviewController::class, 'createCourseReview']);
-Route::get('/coursereviews', [CourseReviewController::class, 'getCourseReviews']);
-Route::get('/coursereviews/course/{course_id}', [CourseReviewController::class, 'getReviewsByCourseId']);
-Route::put('/coursereviews/{review_id}', [CourseReviewController::class, 'approveCourseReview']);
-Route::delete('/coursereviews/{review_id}', [CourseReviewController::class, 'deleteCourseReview']);
-Route::get('/coursereviews/approved', [CourseReviewController::class, 'getApprovedCourseReviews']);
-Route::put('/coursereviews/{review_id}/approve', [CourseReviewController::class, 'approveCourseReview']);
-
-// subject Review routes
-Route::post('/subjectreviews', [SubjectReviewController::class, 'createSubjectReview']);
-Route::get('/subjectreviews', [SubjectReviewController::class, 'getSubjectReviews']);
-Route::get('/subjectreviews/subject/{subject_id}', [SubjectReviewController::class, 'getReviewsBySubjectId']);
-Route::put('/subjectreviews/{review_id}', [SubjectReviewController::class, 'approveSubjectReview']);
-Route::delete('/subjectreviews/{review_id}', [SubjectReviewController::class, 'deleteSubjectReview']);
-Route::get('/subjectreviews/approved', [SubjectReviewController::class, 'getApprovedSubjectReviews']);
-Route::put('/subjectreviews/{review_id}/approve', [SubjectReviewController::class, 'approveSubjectReview']);
-
 
 // student Routes 
 Route::middleware(['auth:api','check.jwt'])->prefix('student')->group(function () {
@@ -112,3 +90,43 @@ Route::middleware(['auth:api','check.jwt'])->prefix('student')->group(function (
     Route::get('/my-reviews', [StudentController::class, 'getMyReviews']);    
 });
 
+// admin routes
+Route::middleware(['admin'])->group(function () {
+    Route::put('/coursereviews/{review_id}/approve', [CourseReviewController::class, 'approveCourseReview']);
+    
+    // Purchase history
+    Route::get('/purchase-history', [PurchaseController::class, 'getAllPurchaseHistory']);
+
+    // statistics
+    Route::get('/statistics', [StatisticsController::class, 'getStatistics']);
+
+    // courses
+    Route::post('/courses', [CourseController::class, 'createCourse']);
+    Route::put('/courses/{id}', [CourseController::class, 'updateCourse']);
+    Route::delete('/courses/{id}', [CourseController::class, 'deleteCourse']);
+
+    // subjects
+    Route::post('/subjects', [SubjectController::class, 'createSubject']);
+    Route::put('/subjects/{id}', [SubjectController::class, 'updateSubject']);
+    Route::delete('/subjects/{id}', [SubjectController::class, 'deleteSubject']);
+
+    // chapter
+    Route::post('/chapters', [ChapterController::class, 'createChapter']);
+    Route::put('/chapters/{id}', [ChapterController::class, 'updateChapter']);
+    Route::delete('/chapters/{id}', [ChapterController::class, 'deleteChapter']);
+
+    // course reviews (update delete review)
+    Route::put('/coursereviews/{review_id}', [CourseReviewController::class, 'approveCourseReview']);
+    Route::delete('/coursereviews/{review_id}', [CourseReviewController::class, 'deleteCourseReview']);
+
+    // course review approve
+    Route::put('/coursereviews/{review_id}/approve', [CourseReviewController::class, 'approveCourseReview']);
+
+    // subject reviews (update delete review)
+    Route::put('/subjectreviews/{review_id}', [SubjectReviewController::class, 'approveSubjectReview']);
+    Route::delete('/subjectreviews/{review_id}', [SubjectReviewController::class, 'deleteSubjectReview']);
+    
+    // course review approve
+    Route::put('/subjectreviews/{review_id}/approve', [SubjectReviewController::class, 'approveSubjectReview']);
+    
+});

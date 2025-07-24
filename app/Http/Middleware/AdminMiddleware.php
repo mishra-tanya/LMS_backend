@@ -5,6 +5,8 @@ namespace App\Http\Middleware;
 use Closure;
 use Illuminate\Http\Request;
 use Symfony\Component\HttpFoundation\Response;
+use App\Helpers\ApiResponse;
+use Tymon\JWTAuth\Facades\JWTAuth;
 
 class AdminMiddleware
 {
@@ -15,10 +17,16 @@ class AdminMiddleware
      */
     public function handle(Request $request, Closure $next): Response
     {
-        if (!$request->user() || $request->user()->role !== 'admin') {
-            abort(403, 'Unauthorized: Admins only.');
+        $user = JWTAuth::parseToken()->authenticate();
+
+        if (!$user) {
+            return ApiResponse::unauthorized('User not authenticated.');
         }
-        
+
+        if ($user->role !== 'admin') {
+            return ApiResponse::unauthorized('Admins only.');
+        }
+
         return $next($request);
     }
 }

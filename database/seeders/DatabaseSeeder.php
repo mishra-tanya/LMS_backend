@@ -21,22 +21,22 @@ class DatabaseSeeder extends Seeder
         DB::statement('SET FOREIGN_KEY_CHECKS=0;');
         
         // Seed data for users
-        User::factory()->count(10)->create();
+        // User::factory()->count(10)->create();
 
-        // Seed data for courses
-        $this->call(CourseSeeder::class);
+        // // Seed data for courses
+        // $this->call(CourseSeeder::class);
 
-        // Seed data for subjects
-        $this->call(SubjectSeeder::class);
+        // // Seed data for subjects
+        // $this->call(SubjectSeeder::class);
 
-        // Seed data for chapters
-        $this->call(ChapterSeeder::class);
+        // // Seed data for chapters
+        // $this->call(ChapterSeeder::class);
 
         // Seed data for course_reviews
-        CourseReview::factory()->count(10)->create();
+        // CourseReview::factory()->count(10)->create();
 
-        // Seed data for subject_reviews
-        SubjectReview::factory()->count(15)->create();
+        // // Seed data for subject_reviews
+        // SubjectReview::factory()->count(15)->create();
 
         
         // Re-enable foreign key checks
