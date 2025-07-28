@@ -14,7 +14,7 @@ use App\Http\Controllers\StudentController;
 use App\Http\Controllers\PurchaseController;
 use App\Http\Controllers\FeaturedCourseOrSubjectController;
 use App\Http\Controllers\StatisticsController;
-
+use App\Http\Controllers\CouponController;
 // public routes 
 
 // Auth routes
@@ -66,6 +66,13 @@ Route::get('/coursereviews/approved', [CourseReviewController::class, 'getApprov
 Route::get('/subjectreviews', [SubjectReviewController::class, 'getSubjectReviews']);
 Route::get('/subjectreviews/subject/{subject_id}', [SubjectReviewController::class, 'getReviewsBySubjectId']);
 Route::get('/subjectreviews/approved', [SubjectReviewController::class, 'getApprovedSubjectReviews']);
+
+// coupon
+Route::get('/coupons', [CouponController::class, 'index']);
+Route::post('/create-coupon', [CouponController::class, 'create']);       
+Route::put('/update/{id}', [CouponController::class, 'update']);   
+Route::post('/apply', [CouponController::class, 'apply']);        
+Route::post('/validate-coupon', [CouponController::class, 'validateCoupon']);        
 
 // user protected rotues
 Route::middleware(['auth:api', 'check.jwt'])->group(function () {

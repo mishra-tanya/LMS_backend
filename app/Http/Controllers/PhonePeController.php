@@ -14,6 +14,7 @@ use Tymon\JWTAuth\Facades\JWTAuth;
 use App\Helpers\ApiResponse;
 
 use App\Models\PhonePeTransactions;
+use App\Models\Coupons;
 
 class PhonePeController extends Controller
 {
@@ -31,7 +32,6 @@ class PhonePeController extends Controller
         } catch (\Tymon\JWTAuth\Exceptions\JWTException $e) {
             return ApiResponse::unauthorized('Token is missing or invalid.');
         }
-
         $transactionId = (string) Str::uuid();
         $userId = $user->id;
         $paymentType = $request->payment_type;
@@ -44,6 +44,25 @@ class PhonePeController extends Controller
         $paymentType = $validated['payment_type'];
         $course_or_subject_id = $validated['course_or_subject_id'];
         $amount = $validated['amount'];
+        $couponCode = $request->coupon_code;
+
+        $discount = 0;
+
+        if ($couponCode) {
+            $coupon = Coupons::where('coupon_code', $couponCode)->first();
+
+            if (!$coupon || !$coupon->isValid()) {
+                return ApiResponse::clientError('Invalid or expired coupon code.');
+            }
+
+            $discount = $coupon->coupon_type === 'percent'
+                ? ($amount * ($coupon->value / 100))
+                : $coupon->value;
+
+            $discount = min($discount, $amount);
+
+            $amount -= $discount;
+        }
 
         PhonePeTransactions::create([
             'user_id' => $userId,
@@ -52,6 +71,7 @@ class PhonePeController extends Controller
             'transaction_id' => $transactionId,
             'amount' => $amount,
             'status' => 'initiated',
+            'coupon_code' => $couponCode,
         ]);
 
         $authResponse = Http::asForm()->post(env('PHONEPE_AUTH_URL'), [
@@ -165,7 +185,9 @@ class PhonePeController extends Controller
             'payment_type' => 'required|string',
             'course_or_subject_id' => 'required|integer',
             'amount' => 'required|numeric|min:1',
+            'coupon_code' => 'nullable|string',
         ]);
+        
         if($validated['payment_type']!='course' && $validated['payment_type']!='subject' ){
             return [
                 'error' => ApiResponse::clientError("Is not valid.", null, 422)
