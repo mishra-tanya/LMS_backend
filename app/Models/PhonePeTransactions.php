@@ -16,7 +16,8 @@ class PhonePeTransactions extends Model
         'amount',
         'status',
         'merchant_transaction_id',
-        'purchased_at'
+        'purchased_at',
+        'coupon_code'
     ];
     
     protected $casts = [
