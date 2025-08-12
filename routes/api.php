@@ -68,9 +68,6 @@ Route::get('/subjectreviews/subject/{subject_id}', [SubjectReviewController::cla
 Route::get('/subjectreviews/approved', [SubjectReviewController::class, 'getApprovedSubjectReviews']);
 
 // coupon
-Route::get('/coupons', [CouponController::class, 'index']);
-Route::post('/create-coupon', [CouponController::class, 'create']);       
-Route::put('/update/{id}', [CouponController::class, 'update']);   
 Route::post('/apply', [CouponController::class, 'apply']);        
 Route::post('/validate-coupon', [CouponController::class, 'validateCoupon']);        
 
@@ -96,9 +93,14 @@ Route::middleware(['auth:api','check.jwt'])->prefix('student')->group(function (
     Route::get('/payment-history', [PurchaseController::class, 'getUserPurchaseHistory']);
     Route::get('/my-reviews', [StudentController::class, 'getMyReviews']);    
 });
+    Route::get('/delete-coupon/{id}', [CouponController::class, 'deleteCoupon']);    
 
 // admin routes
 Route::middleware(['admin'])->group(function () {
+    Route::get('/coupons', [CouponController::class, 'index']);
+    Route::post('/create-coupon', [CouponController::class, 'create']);       
+    Route::put('/update/{id}', [CouponController::class, 'update']);   
+
     Route::put('/coursereviews/{review_id}/approve', [CourseReviewController::class, 'approveCourseReview']);
     
     // Purchase history

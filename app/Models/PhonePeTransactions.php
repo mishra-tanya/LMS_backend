@@ -5,6 +5,9 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Model;
 use Carbon\Carbon;
 
+use Illuminate\Foundation\Bus\Dispatchable; 
+use App\Jobs\SendPaymentStatusEmailJob;
+
 class PhonePeTransactions extends Model
 {
     protected $table = 'phonepetransaction';
@@ -98,5 +101,17 @@ class PhonePeTransactions extends Model
         return [false, null];
     }
 
+    protected static function booted()
+    {
+        static::updated(function ($transaction) {
+            $originalStatus = $transaction->getOriginal('status');
+            $newStatus = $transaction->status;
 
+            $allowedStatuses = ['success', 'pending', 'failed'];
+
+            if ($originalStatus !== $newStatus && in_array($newStatus, $allowedStatuses)) {
+                SendPaymentStatusEmailJob::dispatch($transaction)->delay(now()->addSeconds(20));
+            }
+        });
+    }
 }

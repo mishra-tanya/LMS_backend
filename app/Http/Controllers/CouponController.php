@@ -48,6 +48,26 @@ class CouponController extends Controller
         }
     }
 
+    public function deleteCoupon(Request $request, $id)
+    {
+        try {
+            $coupon = Coupons::find($id);
+
+            if (!$coupon) {
+                return ApiResponse::clientError('Coupon not found', null, 404);
+            }
+
+            $coupon->delete();
+
+            return ApiResponse::success('Coupon deleted successfully', null, 200);
+
+        } catch (\Exception $e) {
+            return ApiResponse::serverError('An unexpected error occurred', [
+                'error' => $e->getMessage()
+            ], 500);
+        }
+    }
+
 
     public function update(Request $request, $id)
     {
