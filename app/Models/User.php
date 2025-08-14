@@ -94,4 +94,10 @@ class User extends Authenticatable implements JWTSubject, MustVerifyEmail
     {
         $this->notify(new CustomResetPasswordNotification($token, $this->email));
     }
+
+    public function block()
+    {
+        return $this->hasOne(Block::class, 'user_id');
+    }
+
 }

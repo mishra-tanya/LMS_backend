@@ -37,6 +37,8 @@ class AuthService
             'token' => $token,
             'user_id' => $user->id,
             'role' => $user->role,
+            'status' => $user->block ? 'blocked' : 'active',
+            'blockReason' => $user->block ? $user->block->reason : null,
         ];
 
     }

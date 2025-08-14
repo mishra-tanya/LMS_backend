@@ -49,6 +49,8 @@ class AuthController extends Controller
         'token' => $result['token'],
         'user_id' => $result['user_id'],
         'role' => $result['role'],
+        'statusBlock' => $result['status'],
+        'blockReason' => $result['blockReason'],
     ], 201);
     }
 

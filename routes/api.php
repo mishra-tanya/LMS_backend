@@ -15,6 +15,7 @@ use App\Http\Controllers\PurchaseController;
 use App\Http\Controllers\FeaturedCourseOrSubjectController;
 use App\Http\Controllers\StatisticsController;
 use App\Http\Controllers\CouponController;
+use App\Http\Controllers\StudentBlockController;
 // public routes 
 
 // Auth routes
@@ -94,6 +95,12 @@ Route::middleware(['auth:api','check.jwt'])->prefix('student')->group(function (
     Route::get('/my-reviews', [StudentController::class, 'getMyReviews']);    
 });
     Route::get('/delete-coupon/{id}', [CouponController::class, 'deleteCoupon']);    
+
+
+    Route::get('/students', [StudentBlockController::class, 'index']);
+    Route::post('/students/{id}/block', [StudentBlockController::class, 'block']);
+    Route::post('/students/{id}/unblock', [StudentBlockController::class, 'unblock']);
+    Route::get('/students/{id}', [StudentBlockController::class, 'show']);
 
 // admin routes
 Route::middleware(['admin'])->group(function () {
