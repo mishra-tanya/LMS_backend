@@ -4,6 +4,7 @@ namespace App\Services;
 use App\Models\User;
 use Illuminate\Support\Facades\Hash;
 use Tymon\JWTAuth\Facades\JWTAuth;
+use App\Notifications\CustomVerifyEmailNotification;
 
 class AuthService
 {
@@ -14,7 +15,8 @@ class AuthService
             'password' => Hash::make($data['password']),
         ]);
 
-        $user->sendEmailVerificationNotification();
+        $user->notify(new CustomVerifyEmailNotification());
+
         return compact('user');
     }
 

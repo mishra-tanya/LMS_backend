@@ -52,6 +52,6 @@ class SendPaymentStatusEmailJob implements ShouldQueue
         ];
 
         // Send email using your Mailable class
-        Mail::to($user->email)->send(new \App\Mail\PaymentStatusMail($emailData));
+        Mail::mailer('sales')->to($user->email)->send(new \App\Mail\PaymentStatusMail($emailData));
     }
 }

@@ -31,6 +31,7 @@ class CustomResetPasswordNotification extends Notification
         $resetUrl = $frontendUrl . '/reset-password?token=' . $this->token . '&email=' . urlencode($this->email);
 
         return (new MailMessage)
+            ->mailer('info')
             ->subject('Reset Password Notification')
             ->line('You are receiving this email because we received a password reset request for your account.')
             ->action('Reset Password', $resetUrl)
